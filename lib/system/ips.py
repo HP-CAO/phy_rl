@@ -1,0 +1,207 @@
+import numpy as np
+import copy
+import os
+import pickle
+from lib.utils import states2observations
+from lib.monitor.monitor import ModelStatsParams, ModelStats
+from lib.env.gym_physics import GymPhysics, GymPhysicsParams
+from lib.env.reward import RewardParams, RewardFcn
+
+from matplotlib import pyplot as plt
+
+
+class IpsSystemParams:
+    def __init__(self):
+        self.physics_params = GymPhysicsParams()
+        self.reward_params = RewardParams()
+        self.stats_params = ModelStatsParams()
+        self.agent_params = None
+
+
+class IpsSystem:
+    def __init__(self, params: IpsSystemParams):
+        self.params = params
+
+        self.physics = GymPhysics(self.params.physics_params)
+        self.model_stats = ModelStats(self.params.stats_params, self.physics)
+        self.reward_fcn = RewardFcn(self.params.reward_params)
+        self.shape_targets = self.model_stats.get_shape_targets()
+        self.shape_observations = self.physics.get_shape_observations()
+        self.trainer = None
+        self.agent = None
+        self.anomaly_data = []
+        self.disturbed_times = 0
+        self.anomaly_effect_length = 0
+        self.disturbed_state = 0
+        self.disturbance_dim = 0
+
+    def evaluation_episode(self, ep, agent, reset_states=None):
+        self.model_stats.init_episode()
+        self.physics.reset(reset_states)
+
+        if agent.add_actions_observations:
+            action_observations = np.zeros(shape=agent.action_observations_dim)
+        else:
+            action_observations = []
+
+        for step in range(self.params.stats_params.max_episode_steps):
+
+            if self.params.stats_params.visualize_eval:
+                self.physics.render()
+
+            observations = np.hstack((self.model_stats.observations, action_observations))
+
+            action = agent.get_exploitation_action(observations, self.model_stats.targets)
+
+            if self.params.agent_params.add_actions_observations:
+                action_observations = np.append(action_observations, action)[1:]
+
+            states_next = self.physics.step(action)
+
+            stats_observations_next, failed = states2observations(states_next)
+
+            r = self.reward_fcn.reward(self.model_stats.observations, self.model_stats.targets, action, failed,
+                                       pole_length=self.params.physics_params.length)
+
+            self.model_stats.observations = copy.deepcopy(stats_observations_next)
+
+            self.model_stats.measure(self.model_stats.observations, self.model_stats.targets,
+                                     failed, pole_length=self.params.physics_params.length,
+                                     distance_score_factor=self.params.reward_params.distance_score_factor)
+
+            self.model_stats.reward.append(r)
+            self.model_stats.actions_std.append(self.physics.actions_std)
+            self.model_stats.cart_positions.append(self.physics.states[0])
+            self.model_stats.pendulum_angele.append(self.physics.states[2])
+            self.model_stats.actions.append(action)
+
+            if failed:
+                break
+
+        if not self.model_stats.params.eval_on_multi_conditions:
+            self.model_stats.evaluation_monitor_scalar(ep)
+            self.model_stats.evaluation_monitor_image(ep)
+
+        distance_score_and_survived = float(self.model_stats.survived) * self.model_stats.get_average_distance_score()
+
+        self.physics.close()
+
+        return distance_score_and_survived
+
+    def train(self):
+
+        ep = 0
+        global_steps = 0
+        best_dsas = 0.0  # Best distance score and survived
+        moving_average_dsas = 0.0
+        while self.model_stats.total_steps < self.model_stats.params.total_steps:
+
+            self.model_stats.init_episode()
+            ep += 1
+            step = 0
+
+            if self.params.agent_params.add_actions_observations:
+                action_observations = np.zeros(shape=self.params.agent_params.action_observations_dim)
+            else:
+                action_observations = []
+
+            for step in range(self.params.stats_params.max_episode_steps):
+                observations = np.hstack((self.model_stats.observations, action_observations)).tolist()
+
+                action = self.agent.get_exploration_action(observations, self.model_stats.targets)
+
+                if self.params.agent_params.add_actions_observations:
+                    action_observations = np.append(action_observations, action)[1:]
+
+                states_next = self.physics.step(action)
+
+                stats_observations_next, failed = states2observations(states_next)
+                observations_next = np.hstack((stats_observations_next, action_observations)).tolist()
+                r = self.reward_fcn.reward(self.model_stats.observations, self.model_stats.targets, action, failed,
+                                           pole_length=self.params.physics_params.length)
+
+                self.trainer.store_experience(observations, self.model_stats.targets, action, r, observations_next, failed)
+
+                self.model_stats.observations = copy.deepcopy(stats_observations_next)
+
+                self.model_stats.measure(self.model_stats.observations, self.model_stats.targets, failed,
+                                         pole_length=self.params.physics_params.length,
+                                         distance_score_factor=self.params.reward_params.distance_score_factor)
+
+                self.model_stats.reward.append(r)
+                self.model_stats.actions_std.append(self.physics.actions_std)
+
+                critic_loss = self.trainer.optimize()
+                self.model_stats.add_critic_loss(critic_loss)
+
+                global_steps += 1
+
+                # this is for balancing the experiences
+                if self.model_stats.consecutive_on_target_steps > self.params.stats_params.on_target_reset_steps:
+                    break
+
+                if failed:
+                    break
+
+            self.model_stats.add_steps(step)
+            self.model_stats.training_monitor(ep)
+            self.agent.noise_factor_decay(self.model_stats.total_steps)
+
+            if ep % self.params.stats_params.eval_period == 0:
+                dsal = self.multi_episodes_evaluation(ep)
+                # self.agent.save_weights(self.params.stats_params.model_name + '_' + str(ep))
+                moving_average_dsas = 0.95 * moving_average_dsas + 0.05 * dsal
+                if moving_average_dsas > best_dsas:
+                    self.agent.save_weights(self.params.stats_params.model_name + '_best')
+                    best_dsas = moving_average_dsas
+
+        self.agent.save_weights(self.params.stats_params.model_name)
+        np.save(os.path.join(self.model_stats.log_dir, "anomaly_data.npy"), self.anomaly_data)
+
+    def multi_episodes_evaluation(self, ep):
+        """Here we evaluate the performance of the agent on different conditions"""
+        multi_conditions = self.physics.multi_eval_conditions
+        score_list = []
+        episode_log_data_list = []
+        print("Evaluating......")
+
+        for cond in multi_conditions:
+            distance_score_and_survived = self.evaluation_episode(ep, self.agent, cond)
+            score_list.append(distance_score_and_survived)
+            episode_log_data = self.model_stats.log_data()
+            episode_log_data_list.append(episode_log_data)
+
+        self.model_stats.multi_evaluation_scalar(ep, episode_log_data_list)
+        return np.mean(score_list)
+
+    def inject_disturbance(self):
+
+        if self.params.agent_params.add_actions_observations:
+            action_observations = np.zeros(shape=self.params.agent_params.action_observations_dim)
+        else:
+            action_observations = []
+
+        states = pickle.load(open('./trajectory/source/2_states.pickle', "rb"))
+        actions = pickle.load(open('./trajectory/source/2_action.pickle', "rb"))
+
+        for i in range(len(states) - 1):
+
+            state = states[i]
+            action = actions[i]
+
+            stats_observations, _ = states2observations(state)
+
+            observations = np.hstack((stats_observations, action_observations)).tolist()
+
+            if self.params.agent_params.add_actions_observations:
+                action_observations = np.append(action_observations, action)[1:]
+
+            stats_observations_next, failed = states2observations(states[i + 1])
+
+            observations_next = np.hstack((stats_observations_next, action_observations)).tolist()
+
+            r = self.reward_fcn.reward(observations, [0., 0.], action, failed,
+                                       pole_length=self.params.physics_params.length)
+
+            self.trainer.store_experience(observations, self.model_stats.targets, action, r, observations_next,
+                                          failed)
