@@ -1,12 +1,10 @@
 import pickle
-import threading
 import struct
-import time
 import math
 import numpy as np
-from realips.agent.base import BaseAgent
-from realips.remote.redis import RedisParams, RedisConnection
-from realips.agent.ddpg import DDPGAgentParams
+from lib.agent.base import BaseAgent
+from lib.real.redis import RedisParams, RedisConnection
+from lib.agent.ddpg import DDPGAgentParams
 
 
 class ControlParams:

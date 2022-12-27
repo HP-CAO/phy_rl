@@ -1,5 +1,5 @@
 import argparse
-from realips.remote.edge_sim import SimEdgeControlParams, SimEdgeControl
+from lib.real.edge_sim import SimEdgeControlParams, SimEdgeControl
 
 from utils import *
 

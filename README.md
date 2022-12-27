@@ -1,5 +1,5 @@
 # phy_rl
-phy_rl
+In this project, we explore physical knowledge affiliated reinforcement learning (RL) with a case study of an inverted pendulum.
 
 ## Description
 
@@ -20,5 +20,31 @@ pip install -r requirement.txt
 
 ## Run
 
+```
+main_ddpg.py [-h] [--config CONFIG] [--generate_config] [--force]
+                  [--params [PARAMS [PARAMS ...]]] [--mode MODE]
+                  [--gpu] [--id RUN_ID][--weights PATH_TO_WEIGHTS] 
+
+arguments:
+  --config             Specifying different configuration .json files for different test.
+  --generate_config    Generating default configuration .json files. 
+  --force              Over-writting the previous run of same ID.
+  --params             Over-writting params setting.
+  --gpu                Enabling gpu device to speed up training. Training using CPU if not specified.   
+  --mode MODE          [train|val|full] decide image split of dataset.
+  --id                 Assigning an ID for the training/testing.
+  --weights            Loading pretrained weights.    
+```
 
 
+Example_1: Generate configuration file
+
+```
+python main_ddpg.py --generate_config
+```
+
+Example_2: Training/Testing
+
+```
+python main_ddpg.py --config {PATH_TO_CONFIG_FILE} --mode {train|test} --id {RUN_NAME} --gpu --weights {PATH_TO_PRETRAINED_WEIGHTS}
+```

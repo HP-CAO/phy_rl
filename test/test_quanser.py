@@ -7,7 +7,7 @@ import os
 import argparse
 from simple_pid import PID
 from datetime import datetime
-from realips.env.quanser_plant import QuanserPlant, QuanserParams
+from lib.env.quanser_plant import QuanserPlant, QuanserParams
 from quanser.hardware import HIL, Clock, HILError
 
 

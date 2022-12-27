@@ -1,6 +1,6 @@
 tensorflow~=2.5.0
 tensorflow-probability
-gym
+gym==0.21
 redis
 matplotlib
 numpy~=1.19.5

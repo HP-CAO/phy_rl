@@ -1,7 +1,7 @@
 import argparse
 import os
 import tensorflow as tf
-from realips.remote.cloud_trainer import CloudSystem, CloudSystemParams
+from lib.real.cloud_trainer import CloudSystem, CloudSystemParams
 from utils import *
 
 

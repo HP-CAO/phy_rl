@@ -1,8 +1,4 @@
 import argparse
-
-import numpy as np
-import copy
-
 from utils import read_config, write_config, override_params
 from os import listdir
 from os.path import isfile, join

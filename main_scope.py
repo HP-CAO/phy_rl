@@ -1,5 +1,5 @@
 import argparse
-from realips.remote.plant_scope import PlantScopeParams, PlantScope
+from lib.real.plant_scope import PlantScopeParams, PlantScope
 from utils import *
 
 

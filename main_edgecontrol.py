@@ -1,5 +1,5 @@
 import argparse
-from realips.remote.edge_quanser import QuanserEdgeControlParams, QuanserEdgeControl
+from lib.real.edge_quanser import QuanserEdgeControlParams, QuanserEdgeControl
 
 from utils import *
 

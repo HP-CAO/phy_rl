@@ -1,6 +1,6 @@
 import math
 import time
-from realips.env.gym_physics import GymPhysics, GymPhysicsParams
+from lib.env.gym_physics import GymPhysics, GymPhysicsParams
 
 car_pole_params = GymPhysicsParams()
 car_pole_params.ini_states = [0., 0., 1, 0., False]

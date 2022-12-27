@@ -2,7 +2,7 @@ import argparse
 import os
 import tensorflow as tf
 
-from realips.system.ips_ddpg import IpsDDPG, IpsDDPGParams
+from lib.system.ips_ddpg import IpsDDPG, IpsDDPGParams
 from utils import *
 
 
