@@ -31,7 +31,7 @@ arguments:
   --force              Over-writting the previous run of same ID.
   --params             Over-writting params setting.
   --gpu                Enabling gpu device to speed up training. Training using CPU if not specified.   
-  --mode MODE          [train|val|full] decide image split of dataset.
+  --mode MODE          Training or testing [train|test]
   --id                 Assigning an ID for the training/testing.
   --weights            Loading pretrained weights.    
 ```
