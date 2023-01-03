@@ -44,7 +44,8 @@ class GymPhysics(gym.Env):
         self.with_perfect_detection = True
         self.params = params
         self.total_mass = (self.params.mass_cart + self.params.mass_pole)
-        self.pole_mass_length = self.params.mass_pole / 2
+        self.half_length = self.params.length * 0.5
+        self.pole_mass_length_half = self.params.mass_pole * self.half_length
         self.seed()
         self.viewer = None
         self.states = None
@@ -85,22 +86,22 @@ class GymPhysics(gym.Env):
         if self.params.with_friction:
             """ with friction"""
             temp \
-                = (force + self.pole_mass_length * theta_dot ** 2 *
+                = (force + self.pole_mass_length_half * theta_dot ** 2 *
                    sintheta - self.params.friction_cart * x_dot) / self.total_mass
 
             thetaacc = \
                 (self.params.gravity * sintheta - costheta * temp -
-                 self.params.friction_pole * theta_dot / self.pole_mass_length) / \
-                (self.params.length / 2 * (4.0 / 3.0 - self.params.mass_pole * costheta ** 2 / self.total_mass))
+                 self.params.friction_pole * theta_dot / self.pole_mass_length_half) / \
+                (self.half_length * (4.0 / 3.0 - self.params.mass_pole * costheta ** 2 / self.total_mass))
 
-            xacc = temp - self.pole_mass_length * thetaacc * costheta / self.total_mass
+            xacc = temp - self.pole_mass_length_half * thetaacc * costheta / self.total_mass
 
         else:
             """without friction"""
-            temp = (force + self.pole_mass_length * theta_dot ** 2 * sintheta) / self.total_mass
+            temp = (force + self.pole_mass_length_half * theta_dot ** 2 * sintheta) / self.total_mass
             thetaacc = (self.params.gravity * sintheta - costheta * temp) / \
-                       (self.params.length / 2 * (4.0 / 3.0 - self.params.mass_pole * costheta ** 2 / self.total_mass))
-            xacc = temp - self.pole_mass_length * thetaacc * costheta / self.total_mass
+                       (self.half_length * (4.0 / 3.0 - self.params.mass_pole * costheta ** 2 / self.total_mass))
+            xacc = temp - self.pole_mass_length_half * thetaacc * costheta / self.total_mass
 
         if self.params.kinematics_integrator == 'euler':
             x = x + self.tau * x_dot
