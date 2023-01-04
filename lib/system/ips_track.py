@@ -75,8 +75,8 @@ class ModelTrackSystem:
             self.model_stats.pendulum_angele.append(self.physics.states[2])
             self.model_stats.actions.append(action)
 
-            if failed:
-                break
+            # if failed:
+            #     break
 
         if not self.model_stats.params.eval_on_multi_conditions:
             self.model_stats.evaluation_monitor_scalar(ep)
