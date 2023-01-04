@@ -11,7 +11,7 @@ class GymPhysicsParams:
         self.theta_dot_threshold = 15
         self.kinematics_integrator = 'euler'
 
-        self.ini_states = [0., 0., -math.pi, 0., False]
+        self.ini_states = [0., 0., -math.pi, 0., False]  # theta = 1  loss function + original reward function . 500
         self.gravity = 9.8
         self.mass_cart = 0.94
         self.mass_pole = 0.23

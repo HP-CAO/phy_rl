@@ -9,6 +9,12 @@ class RewardParams:
         self.crash_penalty = 10
         self.distance_score_factor = 5
 
+        self.x_error_weight = 1
+        self.v_error_weight = 1
+        self.theta_error_weight = 1
+        self.theta_dot_error_weight = 1
+        self.tracking_error_weight = 1
+
 
 class RewardFcn:
 
@@ -40,7 +46,7 @@ class RewardFcn:
         """
         calculate reward
         :param pole_length: the length of the pole
-        :param distance_score_factor: co-efficient of the distance score
+        :param distance_score_factor: co-efficients of the distance score
         :param observation: [pos, vel, sin_angle, cos_angle, angle_rate]
         :param target: [pos_target, angle_target]
         """
@@ -64,6 +70,17 @@ class RewardFcn:
         distance = np.linalg.norm(target_tip_position - pendulum_tip_position)
 
         return np.exp(-distance * distance_score_factor)  # distance [0, inf) -> score [1, 0)
+
+    def reference_tracking_error(self, states_real, states_reference):
+
+        x_squared_error = (states_real[0] - states_reference[0]) ** 2 * self.params.x_error_weight
+        v_squared_error = (states_real[1] - states_reference[1]) ** 2 * self.params.v_error_weight
+        theta_squared_error = (states_real[2] - states_reference[2]) ** 2 * self.params.theta_error_weight
+        theta_dot_squared_error = (states_real[3] - states_reference[3]) ** 2 * self.params.theta_dot_error_weight
+
+        error = -1 * (x_squared_error + v_squared_error + theta_squared_error + theta_dot_squared_error)
+
+        return error
 
 
 
