@@ -1,5 +1,6 @@
 import numpy as np
 import copy
+import math
 from lib.utils import states2observations
 from lib.monitor.monitor import ModelStatsParams, ModelStats
 from lib.env.gym_physics import GymPhysics, GymPhysicsParams
@@ -31,7 +32,7 @@ class ModelTrackSystem:
 
     def evaluation_episode(self, ep, agent, reset_states=None):
         self.model_stats.init_episode()
-
+        reset_states = [0., 0., 2 * -math.pi/180, 0., False]
         self.physics.reset(reset_states)
         self.reference_model.reset(reset_states)
 
@@ -44,6 +45,7 @@ class ModelTrackSystem:
 
             if self.params.stats_params.visualize_eval:
                 self.physics.render()
+                self.reference_model.render()
 
             observations = np.hstack((self.model_stats.observations, action_observations))
 

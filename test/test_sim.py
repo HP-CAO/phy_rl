@@ -26,6 +26,8 @@ for _ in steps:
 
     cart_pole.step(action=0.0)  # stable states
     l_cart_pole.step()
+    cart_pole.render()
+    l_cart_pole.render()
 
     print("original_system:", cart_pole.states)
     print("linearized_system:", l_cart_pole.states)
@@ -33,6 +35,6 @@ for _ in steps:
     print("reward:", tracking_reward)
     reward_list.append(tracking_reward)
 
-plt.plot(steps, reward_list)
-plt.show()
+# plt.plot(steps, reward_list)
+# plt.show()
     # cart_pole.render(mode='human')
