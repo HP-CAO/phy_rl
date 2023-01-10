@@ -29,10 +29,11 @@ class ModelTrackSystem:
         self.shape_observations = self.physics.get_shape_observations()
         self.trainer = None
         self.agent = None
+        self.trajectory_tensor = []
+        self.reference_trajectory_tensor = []
 
-    def evaluation_episode(self, ep, agent, reset_states=None):
+    def evaluation_episode(self, ep, agent, reset_states=None, mode="train"):
         self.model_stats.init_episode()
-        reset_states = [0., 0., 2 * -math.pi/180, 0., False]
         self.physics.reset(reset_states)
         self.reference_model.reset(reset_states)
 
@@ -42,6 +43,10 @@ class ModelTrackSystem:
             action_observations = []
 
         for step in range(self.params.stats_params.max_episode_steps):
+
+            if mode == "test":
+                self.trajectory_tensor.append(self.physics.states[:4])
+                self.reference_trajectory_tensor.append(self.reference_model.states[:4])
 
             if self.params.stats_params.visualize_eval:
                 self.physics.render()

@@ -302,3 +302,37 @@ class ModelStats:
 
     def get_survived(self):
         return self.survived
+
+
+def plot_trajectory(trajectory_tensor, reference_trajectory_tensor=None):
+    """
+    trajectory_tensor: an numpy array [n, 4], where n is the length of the trajectory,
+                        5 is the dimension of each point on the trajectory, containing [x, x_dot, theta, theta_dot]
+    """
+    trajectory_tensor = np.array(trajectory_tensor)
+    reference_trajectory_tensor = np.array(reference_trajectory_tensor) if reference_trajectory_tensor is not None else None
+    n, c = trajectory_tensor.shape
+
+    y_label_list = ["x", "x_dot", "theta", "theta_dot"]
+
+    plt.figure(figsize=(9, 6))
+
+    for i in range(c):
+
+        plt.subplot(c, 1, i+1)
+        plt.plot(np.arange(n), trajectory_tensor[:, i], label=y_label_list[i])
+
+        if reference_trajectory_tensor is not None:
+            plt.plot(np.arange(n), reference_trajectory_tensor[:, i], label=y_label_list[i])
+
+        plt.legend(loc='best')
+        plt.grid(True)
+
+    plt.tight_layout()
+    plt.savefig("trajectory.png", dpi=300)
+    plt.show()
+
+
+
+
+

@@ -2,6 +2,7 @@ from lib.agent.ddpg import DDPGAgent, DDPGAgentParams
 from lib.trainer.trainer_ddpg import DDPGTrainer, DDPGTrainerParams
 from lib.system.ips_track import ModelTrackParams, ModelTrackSystem
 from utils import write_config
+from lib.monitor.monitor import plot_trajectory
 
 
 class TrackDDPGParams(ModelTrackParams):
@@ -26,4 +27,11 @@ class TrackDDPG(ModelTrackSystem):
         write_config(params, f"{self.model_stats.log_dir}/config.json")
 
     def test(self):
-        self.evaluation_episode(ep=0, agent=self.agent)
+        reset_states = [0., 0., 0.099, 0., False] # todo to set a parameter
+        self.evaluation_episode(ep=0, reset_states=reset_states, agent=self.agent, mode="test")
+        plot_trajectory(self.trajectory_tensor, self.reference_trajectory_tensor)
+
+
+
+
+
