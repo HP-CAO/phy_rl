@@ -34,6 +34,7 @@ class ModelTrackSystem:
 
     def evaluation_episode(self, ep, agent, reset_states=None, mode="train"):
         self.model_stats.init_episode()
+        reset_states = [0.0, 0.0, 0.1, 0.0, False]
         self.physics.reset(reset_states)
         self.reference_model.reset(reset_states)
 
@@ -66,7 +67,7 @@ class ModelTrackSystem:
 
             performance_reward = self.reward_fcn.reward(
                 self.model_stats.observations, self.model_stats.targets, action, failed,
-                pole_length=self.params.physics_params.length)
+                pole_length=self.params.physics_params.length, states_real=states_next)
 
             tracking_reward = self.reward_fcn.reference_tracking_error(states_next, refer_states)
             r = self.params.reward_params.tracking_error_weight * tracking_reward + performance_reward
@@ -74,7 +75,7 @@ class ModelTrackSystem:
             self.model_stats.observations = copy.deepcopy(stats_observations_next)
             self.model_stats.measure(self.model_stats.observations, self.model_stats.targets,
                                      failed, pole_length=self.params.physics_params.length,
-                                     distance_score_factor=self.params.reward_params.distance_score_factor)
+                                     distance_score_factor=self.params.reward_params.distance_score_factor, states_real=states_next)
 
             self.model_stats.reward.append(r)
             self.model_stats.actions_std.append(self.physics.actions_std)
@@ -104,8 +105,10 @@ class ModelTrackSystem:
         while self.model_stats.total_steps < self.model_stats.params.total_steps:
 
             self.model_stats.init_episode()
+            random_theta = np.random.uniform(-0.1, 0.1)  # initialize theta in [-0.1, 0.1] for training
+            self.physics.states = [0, 0, random_theta, 0, False]
             self.reference_model.reset(self.physics.states)
-
+            
             ep += 1
             step = 0
 
@@ -130,8 +133,8 @@ class ModelTrackSystem:
 
                 performance_reward = self.reward_fcn.reward(
                     self.model_stats.observations, self.model_stats.targets, action, failed,
-                    pole_length=self.params.physics_params.length)
-
+                    pole_length=self.params.physics_params.length, states_real=states_next)
+                
                 tracking_reward = self.reward_fcn.reference_tracking_error(states_next, refer_states)
 
                 r = self.params.reward_params.tracking_error_weight * tracking_reward + performance_reward
@@ -142,7 +145,7 @@ class ModelTrackSystem:
 
                 self.model_stats.measure(self.model_stats.observations, self.model_stats.targets, failed,
                                          pole_length=self.params.physics_params.length,
-                                         distance_score_factor=self.params.reward_params.distance_score_factor)
+                                         distance_score_factor=self.params.reward_params.distance_score_factor, states_real=states_next)
 
                 self.model_stats.reward.append(r)
                 self.model_stats.actions_std.append(self.physics.actions_std)
@@ -163,7 +166,7 @@ class ModelTrackSystem:
             self.agent.noise_factor_decay(self.model_stats.total_steps)
 
             if ep % self.params.stats_params.eval_period == 0:
-                dsal = self.multi_episodes_evaluation(ep)
+                dsal = self.episodes_evaluation(ep)
                 moving_average_dsas = 0.95 * moving_average_dsas + 0.05 * dsal
                 if moving_average_dsas > best_dsas:
                     self.agent.save_weights(self.params.stats_params.model_name + '_best')
@@ -171,9 +174,13 @@ class ModelTrackSystem:
 
         self.agent.save_weights(self.params.stats_params.model_name)
 
-    def multi_episodes_evaluation(self, ep):
+    def episodes_evaluation(self, ep):
         """Here we evaluate the performance of the agent on different conditions"""
-        multi_conditions = self.physics.multi_eval_conditions
+        if self.params.stats_params.eval_on_multi_conditions:
+            multi_conditions = self.physics.multi_eval_conditions
+        else:
+            multi_conditions = [[0, 0., 0.1, 0., False]]  # We only evaluate with the initial theta = 0.1
+
         score_list = []
         episode_log_data_list = []
         print("Evaluating......")
