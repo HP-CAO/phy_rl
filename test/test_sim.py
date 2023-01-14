@@ -11,12 +11,12 @@ from lib.utils import states2observations
 reward_function = RewardFcn(RewardParams())
 
 car_pole_params = GymPhysicsParams()
-car_pole_params.ini_states = [0., 0., 0, 0., False]
+car_pole_params.ini_states = [0.0, 0.0, 0.1, 0.0, False]
 cart_pole = GymPhysics(car_pole_params)
 cart_pole.reset()
 
 l_car_pole_params = LinearPhysicsParams()
-l_car_pole_params.ini_states = [0., 0., 1, 0., False]
+l_car_pole_params.ini_states = [0.0, 0.0, 0.1, 0.0, False]
 l_cart_pole = LinearPhysics(l_car_pole_params)
 l_cart_pole.reset()
 reward_list = []
