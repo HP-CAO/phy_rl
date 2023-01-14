@@ -11,7 +11,7 @@ class GymPhysicsParams:
         self.theta_dot_threshold = 15
         self.kinematics_integrator = 'euler'
 
-        self.ini_states = [0., 0., -math.pi, 0., False]  # theta = 1  loss function + original reward function . 500
+        self.ini_states = [0.0, 0.0, 0.1, 0.0, False]  # theta = 1  loss function + original reward function . 500
         self.gravity = 9.8
         self.mass_cart = 0.94
         self.mass_pole = 0.23
@@ -139,11 +139,13 @@ class GymPhysics(gym.Env):
         self.actions_std = 0.0
 
     def random_reset(self):
-        ran_x = np.random.uniform(-0.8 * self.params.x_threshold, 0.8 * self.params.x_threshold)
-        if self.is_failed(ran_x, 0):
-            ran_x += 0
+        #ran_x = np.random.uniform(-0.8 * self.params.x_threshold, 0.8 * self.params.x_threshold)
+        #if self.is_failed(ran_x, 0):
+        #    ran_x += 0
+        ran_x = 0
         ran_v = 0
-        ran_theta = np.random.normal(math.pi, self.params.theta_random_std)
+        ran_theta = np.random.uniform(-0.1, 0.1)
+        #ran_theta = np.random.normal(math.pi, self.params.theta_random_std)
         ran_theta_v = 0
         failed = False
         self.states = [ran_x, ran_v, ran_theta, ran_theta_v, failed]

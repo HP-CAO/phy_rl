@@ -6,7 +6,7 @@ import numpy as np
 
 class LinearPhysicsParams:
     def __init__(self):
-        self.ini_states = [0., 0., -math.pi, 0., False]
+        self.ini_states = [0.0, 0.0, 0.1, 0.0, False]
         self.x_threshold = 0.3
         self.length = 0.64
         self.theta_dot_threshold = 15
