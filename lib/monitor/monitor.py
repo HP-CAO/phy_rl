@@ -15,7 +15,7 @@ from time import time
 class ModelStatsParams:
     def __init__(self):
         self.max_episode_steps = 1000
-        self.total_steps = int(1e6)
+        self.total_steps = int(1e9)
         self.target_distance_score = 0.77880078307  # 5 cm distance from the target tape
         self.targets = [0., 0.]  # [x, theta]
         self.model_name = "model_name"
@@ -116,9 +116,9 @@ class ModelStats:
         else:
             return sum(self.distance_scores) / len(self.distance_scores)
 
-    def measure(self, observation, target, crash, pole_length, distance_score_factor):
+    def measure(self, observation, target, crash, pole_length, distance_score_factor, states_real):
 
-        distance_score = RewardFcn.get_distance_score(observation, target, pole_length, distance_score_factor)
+        distance_score = RewardFcn.get_distance_score(observation, target, pole_length, distance_score_factor, states_real)
 
         if distance_score > self.params.target_distance_score:
             self.on_target_steps += 1
@@ -304,33 +304,33 @@ class ModelStats:
         return self.survived
 
 
-def plot_trajectory(trajectory_tensor, reference_trajectory_tensor=None):
-    """
-    trajectory_tensor: an numpy array [n, 4], where n is the length of the trajectory,
-                        5 is the dimension of each point on the trajectory, containing [x, x_dot, theta, theta_dot]
-    """
-    trajectory_tensor = np.array(trajectory_tensor)
-    reference_trajectory_tensor = np.array(reference_trajectory_tensor) if reference_trajectory_tensor is not None else None
-    n, c = trajectory_tensor.shape
+#def plot_trajectory(trajectory_tensor, reference_trajectory_tensor=None):
+#    """
+#    trajectory_tensor: an numpy array [n, 4], where n is the length of the trajectory,
+#                        5 is the dimension of each point on the trajectory, containing [x, x_dot, theta, theta_dot]
+#    """
+#    trajectory_tensor = np.array(trajectory_tensor)
+#    reference_trajectory_tensor = np.array(reference_trajectory_tensor) if reference_trajectory_tensor is not None else None
+#    n, c = trajectory_tensor.shape
 
-    y_label_list = ["x", "x_dot", "theta", "theta_dot"]
+#    y_label_list = ["x", "x_dot", "theta", "theta_dot"]
 
-    plt.figure(figsize=(9, 6))
+#    plt.figure(figsize=(9, 6))
 
-    for i in range(c):
+#    for i in range(c):
 
-        plt.subplot(c, 1, i+1)
-        plt.plot(np.arange(n), trajectory_tensor[:, i], label=y_label_list[i])
+#        plt.subplot(c, 1, i+1)
+#        plt.plot(np.arange(n), trajectory_tensor[:, i], label=y_label_list[i])
 
-        if reference_trajectory_tensor is not None:
-            plt.plot(np.arange(n), reference_trajectory_tensor[:, i], label=y_label_list[i])
+#        if reference_trajectory_tensor is not None:
+#            plt.plot(np.arange(n), reference_trajectory_tensor[:, i], label=y_label_list[i])
 
-        plt.legend(loc='best')
-        plt.grid(True)
+#        plt.legend(loc='best')
+#        plt.grid(True)
 
-    plt.tight_layout()
-    plt.savefig("trajectory.png", dpi=300)
-    plt.show()
+#    plt.tight_layout()
+#    plt.savefig("trajectory.png", dpi=300)
+#    plt.show()
 
 
 
