@@ -32,7 +32,8 @@
         "action_penalty": 0.05,
         "crash_penalty": 10,
         "observe_reference_states": false,
-        "random_reset": true,
+        "random_reset_train": true,
+        "random_reset_eval": false,
         "update_reference_model": true
     },
     "agent_params": {
