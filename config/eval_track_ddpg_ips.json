@@ -56,6 +56,6 @@
         "model_name": "eval_track",
         "visualize_eval": true,
         "force_override": false,
-        "mode": "train"
+        "mode": "test"
     }
 }
