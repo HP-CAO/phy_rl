@@ -40,11 +40,11 @@ arguments:
 Example_1: Generate configuration file
 
 ```
-python main_ddpg.py --generate_config
+python main.py --generate_config
 ```
 
 Example_2: Training/Testing
 
 ```
-python main_ddpg.py --config {PATH_TO_CONFIG_FILE} --mode {train|test} --id {RUN_NAME} --gpu --weights {PATH_TO_PRETRAINED_WEIGHTS}
+python main.py --config {PATH_TO_CONFIG_FILE} --mode {train|test} --id {RUN_NAME} --gpu --weights {PATH_TO_PRETRAINED_WEIGHTS}
 ```
