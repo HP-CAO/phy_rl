@@ -43,7 +43,7 @@
     "reward_params": {
         "distance_score_reward": 0.0,
         "action_penalty": 0.00,
-        "crash_penalty": 00,
+        "crash_penalty": 0,
         "distance_score_factor": 0,
         "x_error_weight": 1,
         "v_error_weight": 1,

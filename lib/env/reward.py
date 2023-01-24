@@ -33,7 +33,8 @@ class RewardFcn:
         :return: a scalar value
         """
 
-        distance_score = self.get_distance_score(observations, targets, pole_length, self.params.distance_score_factor, states_real)
+        distance_score = self.get_distance_score(observations, targets, pole_length, self.params.distance_score_factor,
+                                                 states_real)
 
         r = self.params.distance_score_reward * distance_score
         r -= self.params.action_penalty * action
@@ -67,29 +68,25 @@ class RewardFcn:
             [target_cart_position + pendulum_length * np.sin(target_pendulum_angle),
              pendulum_length * np.cos(target_pendulum_angle)])
 
-        #distance = np.linalg.norm(target_tip_position - pendulum_tip_position)
-        
-        rx_squared_error = (states_real[0]) ** 2 
-        rv_squared_error = (states_real[1]) ** 2 
-        rtheta_squared_error = (states_real[2]) ** 2 
-        rtheta_dot_squared_error = (states_real[3]) ** 2 
-        
-        distance =  0*np.exp(-1 * (rx_squared_error + rv_squared_error + rtheta_squared_error + rtheta_dot_squared_error) * 2)
-        #distance =  -1 * (rx_squared_error + rv_squared_error + rtheta_squared_error + rtheta_dot_squared_error)
+        # distance = np.linalg.norm(target_tip_position - pendulum_tip_position)
+
+        rx_squared_error = (states_real[0]) ** 2
+        rv_squared_error = (states_real[1]) ** 2
+        rtheta_squared_error = (states_real[2]) ** 2
+        rtheta_dot_squared_error = (states_real[3]) ** 2
+
+        distance = 0 * np.exp(
+            -1 * (rx_squared_error + rv_squared_error + rtheta_squared_error + rtheta_dot_squared_error) * 2)
+        # distance =  -1 * (rx_squared_error + rv_squared_error + rtheta_squared_error + rtheta_dot_squared_error)
 
         return distance  # distance [0, inf) -> score [1, 0)
 
     def reference_tracking_error(self, states_real, states_reference):
-
         x_squared_error = (states_real[0] - states_reference[0]) ** 2 * self.params.x_error_weight
         v_squared_error = (states_real[1] - states_reference[1]) ** 2 * self.params.v_error_weight
         theta_squared_error = (states_real[2] - states_reference[2]) ** 2 * self.params.theta_error_weight
         theta_dot_squared_error = (states_real[3] - states_reference[3]) ** 2 * self.params.theta_dot_error_weight
 
-        error =  -1 * (x_squared_error + v_squared_error + theta_squared_error + theta_dot_squared_error)
+        error = -1 * (x_squared_error + v_squared_error + theta_squared_error + theta_dot_squared_error)
 
         return error
-
-
-
-
