@@ -79,7 +79,7 @@ target/
 # IPython
 profile_default/
 ipython_config.py
-
+*.png
 # pyenv
 .python-version
 

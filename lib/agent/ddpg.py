@@ -23,6 +23,7 @@ class DDPGParams:
         self.max_episode_steps = 500
         self.experience_prefill_size = 128  # no less than the batch_size
         self.mode = 'train'
+        self.as_residual_policy = False
 
 
 class DDPGAgent:

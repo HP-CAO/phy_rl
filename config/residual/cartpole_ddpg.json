@@ -16,8 +16,8 @@
         "with_friction": true,
         "force_input": true,
         "ini_states": [
-            -0.1,
-            -0.1,
+            0.1,
+            0.1,
             0.15,
             0.0,
             false
@@ -50,13 +50,13 @@
         "total_training_steps": 1e7,
         "max_episode_steps": 500,
         "experience_prefill_size": 128,
-        "as_residual_policy": true
+        "as_residual_policy": false
     },
     "logger_params": {
         "evaluation_period": 20,
-        "model_name": "ddpg_res",
-        "visualize_eval": true,
+        "model_name": "ddpg",
+        "visualize_eval": false,
         "force_override": false,
-        "mode": "test"
+        "mode": "train"
     }
 }

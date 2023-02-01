@@ -16,8 +16,8 @@
         "with_friction": true,
         "force_input": true,
         "ini_states": [
-            -0.1,
-            -0.1,
+            0.1,
+            0.1,
             0.15,
             0.0,
             false
@@ -55,7 +55,7 @@
     "logger_params": {
         "evaluation_period": 20,
         "model_name": "ddpg_res",
-        "visualize_eval": true,
+        "visualize_eval": false,
         "force_override": false,
         "mode": "test"
     }

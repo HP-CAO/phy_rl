@@ -1,6 +1,5 @@
 from lib.agent.ddpg import DDPGParams, DDPGAgent
-from lib.env.cart_pole import CartpoleParams, Cartpole
-from lib.env.cart_pole import states2observations
+from lib.env.cart_pole import CartpoleParams, Cartpole, states2observations
 from lib.logger.logger import LoggerParams, Logger, plot_trajectory
 from lib.utils import ReplayMemory
 import numpy as np
@@ -17,7 +16,9 @@ class Params:
 class CartpoleDDPG:
     def __init__(self, params: Params):
         self.params = params
+
         self.cartpole = Cartpole(self.params.cartpole_params)
+
         self.shape_observations = self.cartpole.states_observations_dim
         self.shape_action = self.cartpole.action_dim
         self.replay_mem = ReplayMemory(self.params.agent_params.total_training_steps)
@@ -47,7 +48,7 @@ class CartpoleDDPG:
 
         action = self.agent.get_action(observations, mode)
 
-        next_states = self.cartpole.step(action)
+        next_states = self.cartpole.step(action, use_residual=self.params.agent_params.as_residual_policy)
 
         if self.params.cartpole_params.update_reference_model:
             self.cartpole.refer_step()

@@ -22,14 +22,15 @@ class CartpoleParams:
 
         self.with_friction = True
         self.force_input = True
-        self.ini_states = [0.0, 0.0, 0.1, 0.0, False]
+        self.ini_states = [0.1, 0.1, 0.15, 0.0, False]
         self.targets = [0., 0.]
 
-        self.distance_score_factor = 1
+        self.distance_score_factor = 0
         self.tracking_error_factor = 1
         self.lyapunov_reward_factor = 1
-        self.action_penalty = 0.05
-        self.crash_penalty = 10
+        self.high_performance_reward_factor = 0.5
+        self.action_penalty = 0
+        self.crash_penalty = 0
 
         self.observe_reference_states = False
         self.random_reset_train = True
@@ -62,9 +63,9 @@ class Cartpole(gym.Env):
         self.action_dim = 1  # force input or voltage
 
         self.matrix_A = np.array([[1, 0.03333333, 0, 0],
-                                  [0.13898557, 1.15349157, 1.4669255, 0.20617051],
+                                  [0.0247, 1.1204, 1.1249, 0.2339],
                                   [0, 0, 1, 0.03333333],
-                                  [-0.30894424, -0.34118891, -2.53462563, 0.54171366]])
+                                  [-0.0580, -0.2822, -1.8709, 0.4519]])
         self.states_refer = None
 
     def seed(self, seed=None):
@@ -81,7 +82,7 @@ class Cartpole(gym.Env):
         self.states_refer = new_states  # to update animation
         return self.states_refer
 
-    def step(self, action: float):
+    def step(self, action: float, use_residual=False):
         """
         param: action: a scalar value (not numpy type) [-1,1]
         return: a list of states
@@ -94,6 +95,10 @@ class Cartpole(gym.Env):
         else:
             voltage = action * self.params.voltage_mag
             force = self.voltage2force(voltage, x_dot)
+
+        if use_residual:
+            force_res = 0.7400 * x + 3.6033 * x_dot + 35.3534 * theta + 6.9982 * theta_dot  # residual control commands
+            force = force + force_res  # RL control comands + residual control commands
 
         costheta = math.cos(theta)
         sintheta = math.sin(theta)
@@ -147,14 +152,9 @@ class Cartpole(gym.Env):
             self.states_refer = self.states
 
     def random_reset(self):
-        # todo here we only randomize theta
-        # ran_x = np.random.uniform(-0.8 * self.params.x_threshold, 0.8 * self.params.x_threshold)
-        # if self.is_failed(ran_x, 0):
-        #    ran_x += 0
-        ran_x = 0.
-        ran_v = 0.
-        ran_theta = np.random.uniform(-0.1, 0.1)
-        # ran_theta = np.random.normal(math.pi, self.params.theta_random_std)
+        ran_x = np.random.uniform(-0.10, 0.10)
+        ran_v = np.random.uniform(-0.10, 0.10)
+        ran_theta = np.random.uniform(-0.15, 0.15)
         ran_theta_v = 0.
         failed = False
         self.states = [ran_x, ran_v, ran_theta, ran_theta_v, failed]
@@ -245,11 +245,9 @@ class Cartpole(gym.Env):
         """
         The equation can be found in the Pendulum Gantry workbook eq 2.11
         Convert voltage control to force control
-        :param voltage: voltage action from the agent
+        :param voltage: voltage from the agent
         :return: force actuation to the plant
         """
-
-        # f = 0.90 * 3.71 * 7.68 * (voltage * 6.35 * 0.69  - 7.68 * 3.71 * cart_v) / (6.35 * 6.35 * 2.6)
         f = 1.07 * voltage - 6.96 * cart_v
         return f
 
@@ -277,41 +275,66 @@ class Cartpole(gym.Env):
         return distance_score
 
     @staticmethod
-    def get_lyapunov_reward(states_real):
-        # here the states are compared to [0, 0, 0, 0]
-        rx_squared_error = (states_real[0]) ** 2
-        rv_squared_error = (states_real[1]) ** 2
-        rtheta_squared_error = (states_real[2]) ** 2
-        rtheta_dot_squared_error = (states_real[3]) ** 2
-
-        distance \
-            = np.exp(-1 * (rx_squared_error + rv_squared_error + rtheta_squared_error + rtheta_dot_squared_error) * 2)
-
-        return distance
+    def get_lyapunov_reward(P_matrix, states_real):
+        state = np.array(states_real[0:4])
+        state = np.expand_dims(state, axis=0)
+        Lya1 = np.matmul(state, P_matrix)
+        Lya = np.matmul(Lya1, np.transpose(state))
+        return Lya
 
     @staticmethod
-    def get_tracking_error(states_real, states_reference):
-        x_squared_error = (states_real[0] - states_reference[0]) ** 2
-        v_squared_error = (states_real[1] - states_reference[1]) ** 2
-        theta_squared_error = (states_real[2] - states_reference[2]) ** 2
-        theta_dot_squared_error = (states_real[3] - states_reference[3]) ** 2
-        error = -1 * (x_squared_error + v_squared_error + theta_squared_error + theta_dot_squared_error)
+    def get_tracking_error(P_matrix, states_real, states_reference):
+
+        state = np.array(states_real[0:4])
+        state = np.expand_dims(state, axis=0)
+        state_ref = np.array(states_reference[0:4])
+        state_ref = np.expand_dims(state_ref, axis=0)
+
+        state_error = state - state_ref
+        eLya1 = np.matmul(state_error, P_matrix)
+        eLya = np.matmul(eLya1, np.transpose(state_error))
+
+        error = -eLya
 
         return error
 
+    @staticmethod
+    def high_performance_reward(action):
+
+        # motivation: minimizing the acceleration
+
+        r = -action * action
+
+        return r
+
     def reward_fcn(self, states_current, action, states_next, states_refer_current):
+
+        P_matrix = np.array([[2.0120, 0.2701, 1.4192, 0.2765],
+                             [0.2701, 2.2738, 5.1795, 1.0674],
+                             [1.4192, 5.1795, 31.9812, 4.9798],
+                             [0.2765, 1.0674, 4.9798, 1.0298]])  # Lyapunov P matrix
+
         observations, _ = states2observations(states_current)
         targets = self.params.targets  # [0, 0] stands for position and angle
 
         terminal = states_next[-1]
 
         distance_score = self.get_distance_score(observations, targets) * self.params.distance_score_factor
-        lyapunov_reward = self.get_lyapunov_reward(states_current) * self.params.lyapunov_reward_factor
-        tracking_error = self.get_tracking_error(states_current, states_refer_current) * self.params.tracking_error_factor
+
+        lyapunov_reward_current = self.get_lyapunov_reward(P_matrix,
+                                                           states_current) * self.params.lyapunov_reward_factor
+        lyapunov_reward_next = self.get_lyapunov_reward(P_matrix, states_next) * self.params.lyapunov_reward_factor
+        lyapunov_reward = lyapunov_reward_current - lyapunov_reward_next
+
+        tracking_error = self.get_tracking_error(P_matrix, states_current,
+                                                 states_refer_current) * self.params.tracking_error_factor
+
+        high_performance_reward = self.high_performance_reward(action) * self.params.high_performance_reward_factor
+
         action_penalty = -1 * self.params.action_penalty * action
         crash_penalty = -1 * self.params.crash_penalty * terminal
 
-        r = distance_score + lyapunov_reward + tracking_error + action_penalty + crash_penalty
+        r = distance_score + lyapunov_reward + tracking_error + action_penalty + crash_penalty + high_performance_reward
         return r, distance_score
 
 
