@@ -35,7 +35,9 @@
         "observe_reference_states": false,
         "random_reset_train": true,
         "random_reset_eval": false,
-        "update_reference_model": true
+        "update_reference_model": true,
+        "sparse_reset": true
+
     },
     "agent_params": {
         "action_noise": "OU",
@@ -56,7 +58,7 @@
     "logger_params": {
         "evaluation_period": 20,
         "model_name": "ddpg_res",
-        "visualize_eval": true,
+        "visualize_eval": false,
         "force_override": false,
         "mode": "test"
     }

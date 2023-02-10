@@ -36,6 +36,7 @@ class CartpoleParams:
         self.random_reset_train = True
         self.random_reset_eval = False
         self.update_reference_model = True
+        self.sparse_reset = False
 
 
 class Cartpole(gym.Env):
@@ -152,12 +153,41 @@ class Cartpole(gym.Env):
             self.states_refer = self.states
 
     def random_reset(self):
-        ran_x = np.random.uniform(-0.10, 0.10)
-        ran_v = np.random.uniform(-0.10, 0.10)
-        ran_theta = np.random.uniform(-0.15, 0.15)
-        ran_theta_v = 0.
-        failed = False
-        self.states = [ran_x, ran_v, ran_theta, ran_theta_v, failed]
+        # todo get rid of [-,-,-] and [+, +, +]
+        if self.params.sparse_reset:
+            ran_x = 0.10
+            ran_v = 0.10
+            ran_theta = 0.15
+            ran_theta_v = 0
+            failed = False
+            sam_inx = np.random.randint(9, size=1)
+
+            if sam_inx == 0:
+                self.states = [ran_x, ran_v, ran_theta, ran_theta_v, failed]
+            elif sam_inx == 1:
+                self.states = [-ran_x, ran_v, ran_theta, ran_theta_v, failed]
+            elif sam_inx == 2:
+                self.states = [ran_x, -ran_v, ran_theta, ran_theta_v, failed]
+            elif sam_inx == 3:
+                self.states = [ran_x, ran_v, -ran_theta, ran_theta_v, failed]
+            elif sam_inx == 4:
+                self.states = [-ran_x, -ran_v, ran_theta, ran_theta_v, failed]
+            elif sam_inx == 5:
+                self.states = [-ran_x, ran_v, -ran_theta, ran_theta_v, failed]
+            elif sam_inx == 6:
+                self.states = [ran_x, -ran_v, -ran_theta, ran_theta_v, failed]
+            elif sam_inx == 7:
+                self.states = [-ran_x, -ran_v, -ran_theta, ran_theta_v, failed]
+            elif sam_inx == 8:
+                self.states = [-ran_x, -ran_v, 0.10, ran_theta_v, failed]
+        else:
+            ran_x = np.random.uniform(-0.10, 0.10)
+            ran_v = np.random.uniform(-0.10, 0.10)
+            ran_theta = np.random.uniform(-0.15, 0.15)
+            ran_theta_v = 0.
+            failed = False
+            self.states = [ran_x, ran_v, ran_theta, ran_theta_v, failed]
+
         self.states_refer = self.states
 
     def render(self, mode='human', states=None, is_normal_operation=True):
@@ -319,7 +349,8 @@ class Cartpole(gym.Env):
 
         terminal = states_next[-1]
 
-        distance_score = self.get_distance_score(observations, targets) * self.params.distance_score_factor
+        distance_score = self.get_distance_score(observations, targets)
+        distance_reward = distance_score * self.params.distance_score_factor
 
         lyapunov_reward_current = self.get_lyapunov_reward(P_matrix,
                                                            states_current) * self.params.lyapunov_reward_factor
@@ -334,7 +365,7 @@ class Cartpole(gym.Env):
         action_penalty = -1 * self.params.action_penalty * action
         crash_penalty = -1 * self.params.crash_penalty * terminal
 
-        r = distance_score + lyapunov_reward + tracking_error + action_penalty + crash_penalty + high_performance_reward
+        r = distance_reward + lyapunov_reward + tracking_error + action_penalty + crash_penalty + high_performance_reward
         return r, distance_score
 
 
