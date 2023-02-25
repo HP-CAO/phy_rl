@@ -1,6 +1,6 @@
 {
     "cartpole_params": {
-        "x_threshold": 0.3,
+        "x_threshold": 0.5,
         "theta_dot_threshold": 15,
         "kinematics_integrator": "euler",
         "gravity": 9.8,
@@ -32,10 +32,12 @@
         "high_performance_reward_factor": 0,
         "action_penalty": 0,
         "crash_penalty": 0,
-        "observe_reference_states": false,
+        "observe_reference_states": true,
         "random_reset_train": true,
         "random_reset_eval": false,
-        "update_reference_model": true
+        "update_reference_model": true,
+        "sparse_reset": true
+
     },
     "agent_params": {
         "action_noise": "OU",
@@ -51,13 +53,15 @@
         "total_training_steps": 1e7,
         "max_episode_steps": 500,
         "experience_prefill_size": 128,
-        "as_residual_policy": true
+        "as_residual_policy": true,
+        "use_taylor_nn": true
     },
     "logger_params": {
         "evaluation_period": 20,
         "model_name": "ddpg_res",
-        "visualize_eval": true,
+        "visualize_eval": false,
         "force_override": false,
         "mode": "test"
     }
 }
+

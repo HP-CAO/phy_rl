@@ -31,7 +31,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.generate_config:
-        generate_config(Params(), "config/default_track_ddpg_ips.json")
+        generate_config(Params(), "config/train.json")
         exit("ddpgips_config file generated")
 
     if not args.gpu:

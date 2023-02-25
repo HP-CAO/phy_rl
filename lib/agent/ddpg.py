@@ -2,7 +2,7 @@ import math
 import os
 import numpy as np
 import tensorflow as tf
-from lib.agent.network import build_mlp_model, TaylorModel
+from lib.agent.network import build_mlp_model, TaylorModel, TaylorParams
 from lib.utils import OrnsteinUhlenbeckActionNoise
 
 
@@ -75,10 +75,11 @@ class DDPGAgent:
     def create_model(self, shape_observations, shape_action):
 
         if self.params.use_taylor_nn:
-            self.actor = TaylorModel(aug_order=3, output_activation='tanh')
-            self.actor_target = TaylorModel(aug_order=3, output_activation='tanh')
-            self.critic = TaylorModel(aug_order=3, output_activation=None)
-            self.critic_target = TaylorModel(aug_order=3, output_activation=None)
+            taylor_params = TaylorParams()
+            self.actor = TaylorModel(taylor_params, shape_observations, shape_action, output_activation='tanh')
+            self.actor_target = TaylorModel(taylor_params, shape_observations, shape_action, output_activation='tanh')
+            self.critic = TaylorModel(taylor_params, shape_observations + shape_action, 1, output_activation=None)
+            self.critic_target = TaylorModel(taylor_params, shape_observations + shape_action, 1, output_activation=None)
         else:
             self.actor = build_mlp_model(shape_observations, shape_action, name="actor", output_activation='tanh')
             self.actor_target = \
