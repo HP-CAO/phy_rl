@@ -1,8 +1,4 @@
 import tensorflow as tf
-
-
-
-
 import copy
 import pickle
 from lib.agent.network import TaylorLayer

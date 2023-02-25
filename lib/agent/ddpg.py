@@ -1,9 +1,8 @@
 import math
 import os
-
 import numpy as np
 import tensorflow as tf
-from lib.agent.network import build_mlp_model
+from lib.agent.network import build_mlp_model, TaylorModel
 from lib.utils import OrnsteinUhlenbeckActionNoise
 
 
@@ -24,6 +23,7 @@ class DDPGParams:
         self.experience_prefill_size = 128  # no less than the batch_size
         self.mode = 'train'
         self.as_residual_policy = False
+        self.use_taylor_nn = True
 
 
 class DDPGAgent:
@@ -73,13 +73,20 @@ class DDPGAgent:
         print("Pretrained weights are loaded")
 
     def create_model(self, shape_observations, shape_action):
-        self.actor = build_mlp_model(shape_observations, shape_action, name="actor", output_activation='tanh')
-        self.actor.summary()
-        self.actor_target = build_mlp_model(shape_observations, shape_action, name="actor_target",
-                                            output_activation='tanh')
-        self.critic = build_mlp_model(shape_observations + shape_action, 1, name="critic")
-        self.critic.summary()
-        self.critic_target = build_mlp_model(shape_observations + shape_action, 1, name="critic_target")
+
+        if self.params.use_taylor_nn:
+            self.actor = TaylorModel(aug_order=3, output_activation='tanh')
+            self.actor_target = TaylorModel(aug_order=3, output_activation='tanh')
+            self.critic = TaylorModel(aug_order=3, output_activation=None)
+            self.critic_target = TaylorModel(aug_order=3, output_activation=None)
+        else:
+            self.actor = build_mlp_model(shape_observations, shape_action, name="actor", output_activation='tanh')
+            self.actor_target = \
+                build_mlp_model(shape_observations, shape_action, name="actor_target", output_activation='tanh')
+            self.critic = build_mlp_model(shape_observations + shape_action, 1, name="critic")
+            self.critic_target = build_mlp_model(shape_observations + shape_action, 1, name="critic_target")
+            self.actor.summary()
+            self.critic.summary()
 
     def hard_update(self):
         self.actor_target.set_weights(self.actor.get_weights())
@@ -116,7 +123,7 @@ class DDPGAgent:
         else:
             action_noise = self.action_noise.sample() * self.params.action_noise_factor
 
-        observations_tensor = tf.expand_dims(observations, 0)  # to add batch_size
+        observations_tensor = tf.expand_dims(observations, 0)
         action = tf.squeeze(self.actor(observations_tensor)).numpy()  # squeeze to kill batch_size
 
         action_saturated = float(np.clip((action + action_noise), a_min=-1, a_max=1))

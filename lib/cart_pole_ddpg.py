@@ -39,12 +39,11 @@ class CartpoleDDPG:
         current_states = copy.deepcopy(self.cartpole.states)
 
         observations, _ = states2observations(current_states)
-
         states_refer_current = copy.deepcopy(self.cartpole.states_refer)
 
         if self.params.cartpole_params.observe_reference_states:
-            observations_refer, _ = states2observations(states_refer_current)
-            observations = observations.extend(observations_refer)
+            state_error = np.subtract(current_states, states_refer_current).tolist()
+            observations.extend(state_error[:4])
 
         action = self.agent.get_action(observations, mode)
 
@@ -54,6 +53,12 @@ class CartpoleDDPG:
             self.cartpole.refer_step()
 
         observations_next, failed = states2observations(next_states)
+
+        if self.params.cartpole_params.observe_reference_states:
+            states_refer_next = copy.deepcopy(self.cartpole.states_refer)
+            state_error_next = np.subtract(next_states, states_refer_next).tolist()
+            observations_next.extend(state_error_next[:4])
+
         r, distance_score = self.cartpole.reward_fcn(current_states, action, next_states, states_refer_current)
 
         return observations, action, observations_next, failed, r, distance_score

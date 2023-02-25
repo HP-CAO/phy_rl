@@ -60,7 +60,7 @@ class Cartpole(gym.Env):
 
         self.states_dim = 4  # x, x_dot, theta, theta_dot
         self.states_observations_dim = 5  # x, x_dot, s_theta, c_theta, theta_dot
-        self.states_observations_refer_dim = 5
+        self.states_observations_refer_dim = 4 # error between the states of ref and real
         self.action_dim = 1  # force input or voltage
 
         self.matrix_A = np.array([[1, 0.03333333, 0, 0],
