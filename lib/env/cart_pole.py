@@ -2,6 +2,7 @@ import math
 import gym
 from gym.utils import seeding
 import numpy as np
+import copy
 
 
 class CartpoleParams:
@@ -37,6 +38,7 @@ class CartpoleParams:
         self.random_reset_eval = False
         self.update_reference_model = True
         self.sparse_reset = False
+        self.use_ubc_lya_reward = True
 
 
 class Cartpole(gym.Env):
@@ -100,6 +102,7 @@ class Cartpole(gym.Env):
         if use_residual:
             force_res = 0.7400 * x + 3.6033 * x_dot + 35.3534 * theta + 6.9982 * theta_dot  # residual control commands
             force = force + force_res  # RL control comands + residual control commands
+            # todo considering the bound of the residual
 
         costheta = math.cos(theta)
         sintheta = math.sin(theta)
@@ -153,7 +156,6 @@ class Cartpole(gym.Env):
             self.states_refer = self.states
 
     def random_reset(self):
-        # todo get rid of [-,-,-] and [+, +, +]
         if self.params.sparse_reset:
             ran_x = 0.10
             ran_v = 0.10
@@ -181,14 +183,13 @@ class Cartpole(gym.Env):
             elif sam_inx == 8:
                 self.states = [-ran_x, -ran_v, 0.10, ran_theta_v, failed]
         else:
-            ran_x = np.random.uniform(-0.10, 0.10)
+            ran_x = np.random.uniform(-0.3, 0.3)  # use previous setting and no sparse reset
             ran_v = np.random.uniform(-0.10, 0.10)
             ran_theta = np.random.uniform(-0.15, 0.15)
             ran_theta_v = 0.
             failed = False
             self.states = [ran_x, ran_v, ran_theta, ran_theta_v, failed]
-
-        self.states_refer = self.states
+        self.states_refer = copy.deepcopy(self.states)
 
     def render(self, mode='human', states=None, is_normal_operation=True):
 
@@ -328,21 +329,17 @@ class Cartpole(gym.Env):
 
         return error
 
-    @staticmethod
-    def high_performance_reward(action):
-
-        # motivation: minimizing the acceleration
-
-        r = -action * action
-
-        return r
-
     def reward_fcn(self, states_current, action, states_next, states_refer_current):
 
         P_matrix = np.array([[2.0120, 0.2701, 1.4192, 0.2765],
                              [0.2701, 2.2738, 5.1795, 1.0674],
                              [1.4192, 5.1795, 31.9812, 4.9798],
                              [0.2765, 1.0674, 4.9798, 1.0298]])  # Lyapunov P matrix
+
+        S_matrix = np.array([[1, 0.03333333, 0, 0],
+                             [0.0247, 1.1204, 1.1249, 0.2339],
+                             [0, 0, 1, 0.03333333],
+                             [-0.0580, -0.2822, -1.8709, 0.4519]])
 
         observations, _ = states2observations(states_current)
         targets = self.params.targets  # [0, 0] stands for position and angle
@@ -354,18 +351,31 @@ class Cartpole(gym.Env):
 
         lyapunov_reward_current = self.get_lyapunov_reward(P_matrix,
                                                            states_current) * self.params.lyapunov_reward_factor
+
+        ##########
+        tem_state_a = np.array(states_current[0:4])
+        tem_state_b = np.expand_dims(tem_state_a, axis=0)
+        tem_state_c = np.matmul(tem_state_b, np.transpose(S_matrix))
+        tem_state_d = np.matmul(tem_state_c, P_matrix)
+        lyapunov_reward_current_aux = np.matmul(tem_state_d, np.transpose(tem_state_c))
+        ###########
+
         lyapunov_reward_next = self.get_lyapunov_reward(P_matrix, states_next) * self.params.lyapunov_reward_factor
-        lyapunov_reward = lyapunov_reward_current - lyapunov_reward_next
 
-        tracking_error = self.get_tracking_error(P_matrix, states_current,
-                                                 states_refer_current) * self.params.tracking_error_factor
+        if self.params.use_ubc_lya_reward:
+            lyapunov_reward = lyapunov_reward_current - lyapunov_reward_next
+        else:
+            lyapunov_reward = lyapunov_reward_current_aux - lyapunov_reward_next  # ours
 
-        high_performance_reward = self.high_performance_reward(action) * self.params.high_performance_reward_factor
+        # tracking_error = self.get_tracking_error(P_matrix, states_current,
+        #                                          states_refer_current) * self.params.tracking_error_factor
 
-        action_penalty = -1 * self.params.action_penalty * action
+        action_penalty = -1 * self.params.action_penalty * action * action
         crash_penalty = -1 * self.params.crash_penalty * terminal
 
-        r = distance_reward + lyapunov_reward + tracking_error + action_penalty + crash_penalty + high_performance_reward
+        r = distance_reward + lyapunov_reward + action_penalty + crash_penalty
+        #r = distance_reward + lyapunov_reward + tracking_error + action_penalty + crash_penalty + high_performance_reward
+
         return r, distance_score
 
 
