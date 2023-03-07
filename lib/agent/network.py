@@ -142,18 +142,6 @@ def exp_length(output_size, epd):
         shape list of expanded layer
     """
 
-    # here is the formatting converting
-    # in the previous implementation the number in the list means how many times to augment
-    # For example, the input is always considered as first order,
-    # if epd = 2, this means it will augment twice, leading to the highest order of 3
-    # in the current implementation, the number means the highest order,
-    # if epd = 2, this means the augmentation will perform once, leading to the highest order of 2
-
-    # epd = copy.deepcopy(epd)
-    # for i in range(len(epd)):
-    #     if epd[i] != 0:
-    #         epd[i] -= 1
-
     layer_shape = np.zeros((len(epd), 2))  # layer shape width
     for layer_index in range(len(output_size) - 1):
         expansion_index = np.ones([output_size[layer_index], 1])  # expansion index
@@ -265,20 +253,7 @@ def bias_variable(shape, name, distribution, trainable=True):
 #             prev_layer = tf.nn.tanh(prev_layer)
 #         else:
 #             prev_layer = prev_layer
-#
-#         if self.cp_type == 'sigmoid':
-#             prev_layer = tf.sigmoid(prev_layer)
-#         elif self.cp_type == 'relu':
-#             prev_layer = tf.nn.relu(prev_layer)
-#         elif self.cp_type == 'lin':
-#             prev_layer = tf.multiply(prev_layer, self.aa) + self.bb
-#         else:
-#             prev_layer = prev_layer
-#
-#         print(prev_layer)
-#         print(prev_layer.shape)
-#         print(tf.reshape(prev_layer, shape=(prev_layer.shape[1], prev_layer.shape[0])))
-#         # [none, 5]
+
 #         input_shape = prev_layer.shape[1:]
 #         Id = np.arange(input_shape[0])
 #
@@ -297,53 +272,6 @@ def bias_variable(shape, name, distribution, trainable=True):
 #                 Id[j] = input_epd.shape[1]
 #                 input_epd = tf.concat((input_epd, tem_temp), 1)
 
-        # prev_layer = tf.matmul(self.weights_variables, input_epd) + self.biases_variables
-
-        # Id = np.arange(prev_layer.shape[1])
-        #
-        # print("before:", prev_layer.shape)
-        # N, c = prev_layer.shape
-        # prev_layer = tf.reshape(prev_layer, shape=(c, -1))
-        # input_epd = prev_layer
-        # input_shape = prev_layer.shape
-        # tem_temp = None
-        #
-        # # create Taylor expansion here we can use matrix multiplication in the future
-        # for _ in range(self.exp_order):
-        #     for j in range(input_shape[0]):
-        #         for q in range(input_shape[1]):
-        #             x_temp = tf.multiply(prev_layer[:, j, q], input_epd[:, Id[j]:(Id[input_shape[0] - 1] + 1), q])
-        #             x_temp = tf.expand_dims(x_temp, 1)
-        #             if q == 0:
-        #                 tem_temp = x_temp
-        #             else:
-        #                 tem_temp = tf.concat((tem_temp, x_temp), 1)
-        #         Id[j] = input_epd.shape[0]
-        #
-        #         print("input", input_epd.shape)
-        #         print("tem", tem_temp.shape)
-        #         input_epd = tf.concat((input_epd, tem_temp), 0)
-
-        # for _ in range(self.exp_order):
-        #     augment_list = []
-        #     x_temp = None
-        #     for j in range(prev_layer.shape[1]):
-        #         x_temp = tf.multiply(prev_layer[:, j], input_epd[:, Id[j]:input_epd.shape[1]])
-        #         Id[j] = x_temp.shape[1]
-        #         augment_list.append(x_temp)
-        #     Id += len(augment_list)
-        #     input_epd = tf.concat((input_epd, x_temp), axis=1)
-
-        # prev_layer_reshape_1 = tf.reshape(prev_layer, shape=(-1, prev_layer.shape[1], 1, 1))
-        # prev_layer_reshape_2 = tf.reshape(prev_layer, shape=(-1, 1, prev_layer.shape[1], 1))
-        # prev_layer_reshape_3 = tf.reshape(prev_layer, shape=(-1, 1, 1, prev_layer.shape[1]))
-        #
-        # input_epd = prev_layer_reshape_1 * prev_layer_reshape_2 * prev_layer_reshape_3
-        # input_epd = tf.linalg.band_part(input_epd, 0, -1)
-        # print(input_epd.shape)
-        #
-        # input_epd = tf.keras.layers.Flatten()(input_epd)
-        # print("input_epd_shape", input_epd.shape)
         # prev_layer = tf.matmul(self.weights_variables, input_epd) + self.biases_variables
         #
         # if self.act_type == 'sigmoid':
