@@ -9,8 +9,8 @@ from types import SimpleNamespace as Namespace
 
 
 def plot_group_training(sub_source_folder, save_name, y_label):
-    plot_training_steps = 5e5
-    interval_num = 200  # we split 1e6 into 30 intervals to calculate the confidence interval
+    plot_training_steps = 10000
+    interval_num = 50  # we split 1e6 into 30 intervals to calculate the confidence interval
 
     plt.figure()
     exp_set_list = os.listdir(sub_source_folder)
@@ -24,8 +24,8 @@ def plot_group_training(sub_source_folder, save_name, y_label):
     legend_list = []
 
     for exp_set in exp_set_list:
-        print(exp_set)
-        if exp_set == "UCB w.o res":
+
+        if exp_set == "S Reward":
             continue
 
         legend_list.append(exp_set)
@@ -72,10 +72,10 @@ def plot_group_training(sub_source_folder, save_name, y_label):
         data_frame = pd.DataFrame({"label": set_labels, "Value": set_values})
         plot = sns.lineplot(data=data_frame, x="label", y="Value")
 
-    plot.set(xlabel="Steps", ylabel=f"{y_label}")
+    plot.set(xlabel="Training Steps", ylabel=f"{y_label}")
     plot.ticklabel_format(useOffset=False, style='plain')
     plot.legend(loc='best', fontsize='small', labels=legend_list)
-    plt.savefig(f'plot/{save_name}.png')
+    plt.savefig(f'plot/{save_name}.pdf', format='pdf')
 
 
 if __name__ == '__main__':

@@ -101,7 +101,7 @@ class Cartpole(gym.Env):
 
         if use_residual:
             force_res = 0.7400 * x + 3.6033 * x_dot + 35.3534 * theta + 6.9982 * theta_dot  # residual control commands
-            force = force + force_res  # RL control comands + residual control commands
+            force = force + force_res  # RL control commands + residual control commands
             # todo considering the bound of the residual
 
         costheta = math.cos(theta)
