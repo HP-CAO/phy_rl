@@ -1,4 +1,4 @@
-from lib.agent.ddpg import DDPGParams, DDPGAgent
+from lib.agent.ddpg import DDPGParams, DDPGAgent, TaylorParams
 from lib.env.cart_pole import CartpoleParams, Cartpole, states2observations
 from lib.logger.logger import LoggerParams, Logger, plot_trajectory
 from lib.utils import ReplayMemory
@@ -123,6 +123,8 @@ class CartpoleDDPG:
 
             failed = False
 
+            ep_steps = 0
+
             for step in range(self.params.agent_params.max_episode_steps):
 
                 observations, action, observations_next, failed, r, distance_score = \
@@ -141,6 +143,7 @@ class CartpoleDDPG:
 
                 critic_loss_list.append(critic_loss)
                 global_steps += 1
+                ep_steps += 1
 
                 if failed:
                     break
@@ -150,9 +153,8 @@ class CartpoleDDPG:
             mean_critic_loss = np.mean(critic_loss_list)
 
             self.logger.log_training_data(mean_reward, mean_distance_score, mean_critic_loss, failed, global_steps)
-            print(
-                f"Training at {ep} episodes: average_reward: {mean_reward:.6}, distance_score: {mean_distance_score:.6}, "
-                f"critic_loss: {mean_critic_loss:.6} ")
+            print( f"Training at {ep} episodes: average_reward: {mean_reward:.6}, distance_score: {mean_distance_score:.6}, "
+                f"critic_loss: {mean_critic_loss:.6}, total_steps_ep: {ep_steps} ")
 
             if ep % self.params.logger_params.evaluation_period == 0:
                 eval_mean_reward, eval_mean_distance_score, eval_failed = self.evaluation()
@@ -164,4 +166,4 @@ class CartpoleDDPG:
             self.agent.save_weights(self.logger.model_dir)
 
     def test(self):
-        self.evaluation(mode='test')
+        self.evaluation(mode='test', reset_states=self.params.cartpole_params.ini_states)

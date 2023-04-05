@@ -126,6 +126,6 @@ dmypy.json
 # Pyre type checker
 .pyre/
 .idea/
-models/
+models_old/
 lib/.idea
-logs/
+logs_old/

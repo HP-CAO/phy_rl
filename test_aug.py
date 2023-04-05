@@ -1,9 +1,10 @@
 import numpy as np
 from lib.agent.network import TaylorParams, TaylorModel
+from lib.agent.network import get_knowledge_matrix
 
-params = TaylorParams()
-model = TaylorModel(params, input_dim=4, output_dim=1, output_activation='tanh')
-a = np.random.random(size=(2, 4))
-b = model(a)
-print(b)
-model.summary()
+a = get_knowledge_matrix()
+for i in range(3):
+    print(a[i][0].shape)
+    print(a[i][1].shape)
+
+

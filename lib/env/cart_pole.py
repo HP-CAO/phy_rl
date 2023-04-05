@@ -101,8 +101,9 @@ class Cartpole(gym.Env):
 
         if use_residual:
             force_res = 0.7400 * x + 3.6033 * x_dot + 35.3534 * theta + 6.9982 * theta_dot  # residual control commands
-            force = force + force_res  # RL control comands + residual control commands
-            # todo considering the bound of the residual
+            force = force + force_res  # RL control commands + residual control commands
+
+        force = np.clip(force, a_min=-1*self.params.force_mag, a_max=1*self.params.force_mag)
 
         costheta = math.cos(theta)
         sintheta = math.sin(theta)
@@ -183,10 +184,11 @@ class Cartpole(gym.Env):
             elif sam_inx == 8:
                 self.states = [-ran_x, -ran_v, 0.10, ran_theta_v, failed]
         else:
-            ran_x = np.random.uniform(-0.3, 0.3)  # use previous setting and no sparse reset
-            ran_v = np.random.uniform(-0.10, 0.10)
+            ran_x = np.random.uniform(-0.25, 0.25)  # use previous setting and no sparse reset
+            # ran_v = np.random.uniform(-0.10, 0.10)
+            ran_v = 0
             ran_theta = np.random.uniform(-0.15, 0.15)
-            ran_theta_v = 0.
+            ran_theta_v = 0
             failed = False
             self.states = [ran_x, ran_v, ran_theta, ran_theta_v, failed]
         self.states_refer = copy.deepcopy(self.states)
@@ -208,7 +210,6 @@ class Cartpole(gym.Env):
         if self.viewer is None:
             from gym.envs.classic_control import rendering
             self.viewer = rendering.Viewer(screen_width, screen_height)
-            # target
             self.targettrans = rendering.Transform()
             target = rendering.Image('./target.svg', width=target_width, height=target_height)
             target.add_attr(self.targettrans)
@@ -347,10 +348,9 @@ class Cartpole(gym.Env):
         terminal = states_next[-1]
 
         distance_score = self.get_distance_score(observations, targets)
-        distance_reward = distance_score * self.params.distance_score_factor
+        distance_reward = distance_score * self.params.high_performance_reward_factor
 
-        lyapunov_reward_current = self.get_lyapunov_reward(P_matrix,
-                                                           states_current) * self.params.lyapunov_reward_factor
+        lyapunov_reward_current = self.get_lyapunov_reward(P_matrix, states_current)
 
         ##########
         tem_state_a = np.array(states_current[0:4])
@@ -360,12 +360,14 @@ class Cartpole(gym.Env):
         lyapunov_reward_current_aux = np.matmul(tem_state_d, np.transpose(tem_state_c))
         ###########
 
-        lyapunov_reward_next = self.get_lyapunov_reward(P_matrix, states_next) * self.params.lyapunov_reward_factor
+        lyapunov_reward_next = self.get_lyapunov_reward(P_matrix, states_next)
 
         if self.params.use_ubc_lya_reward:
             lyapunov_reward = lyapunov_reward_current - lyapunov_reward_next
         else:
             lyapunov_reward = lyapunov_reward_current_aux - lyapunov_reward_next  # ours
+
+        lyapunov_reward *= self.params.lyapunov_reward_factor
 
         # tracking_error = self.get_tracking_error(P_matrix, states_current,
         #                                          states_refer_current) * self.params.tracking_error_factor
@@ -374,7 +376,6 @@ class Cartpole(gym.Env):
         crash_penalty = -1 * self.params.crash_penalty * terminal
 
         r = distance_reward + lyapunov_reward + action_penalty + crash_penalty
-        #r = distance_reward + lyapunov_reward + tracking_error + action_penalty + crash_penalty + high_performance_reward
 
         return r, distance_score
 

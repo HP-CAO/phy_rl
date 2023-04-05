@@ -24,6 +24,7 @@ class DDPGParams:
         self.mode = 'train'
         self.as_residual_policy = False
         self.use_taylor_nn = True
+        self.taylor_editing = False
 
 
 class DDPGAgent:
@@ -78,8 +79,10 @@ class DDPGAgent:
             taylor_params = TaylorParams()
             self.actor = TaylorModel(taylor_params, shape_observations, shape_action, output_activation='tanh')
             self.actor_target = TaylorModel(taylor_params, shape_observations, shape_action, output_activation='tanh')
-            self.critic = TaylorModel(taylor_params, shape_observations + shape_action, 1, output_activation=None)
-            self.critic_target = TaylorModel(taylor_params, shape_observations + shape_action, 1, output_activation=None)
+            self.critic = TaylorModel(taylor_params, shape_observations + shape_action, 1, output_activation=None,
+                                      taylor_editing=self.params.taylor_editing)
+            self.critic_target = TaylorModel(taylor_params, shape_observations + shape_action, 1,
+                                             output_activation=None, taylor_editing=self.params.taylor_editing)
         else:
             self.actor = build_mlp_model(shape_observations, shape_action, name="actor", output_activation='tanh')
             self.actor_target = \
