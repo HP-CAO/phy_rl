@@ -115,39 +115,50 @@ class TaylorDenseLayer(Layer):
         self.activation = activation
 
         if editing_matrix is not None:
-            self.weights_editing_matrix = editing_matrix[0]
-            self.bias_editing_matrix = editing_matrix[1]
+            self.phyweightsA = editing_matrix[0]
+            self.phyweightsB = editing_matrix[1]
+            self.phybiasesA = editing_matrix[2]
+            self.phybiasesB = editing_matrix[3]
             self.nn_editing = True
         else:
             self.nn_editing = False
 
     def call(self, inputs, training=None, mask=None):
         inputs = tf.expand_dims(inputs, axis=-1)  # [bs, dim, 1]
-
         # Here to do network editing
         # self.weights_variables ---> # [n, dim] self.biased_variables -----> m
         # tf.linalg.matmul(self.weights_variables, inputs) -----> [bs, n, 1]
         # tf.squeeze ----> [bs, n]
         # logits -----> [bs, n]
-
         if self.nn_editing:
-            logits = tf.squeeze(tf.linalg.matmul(self.weights_variables * self.weights_editing_matrix, inputs), axis=-1) \
-                     + self.biases_variables * tf.squeeze(self.bias_editing_matrix, axis=-1)
+            pre_bias = self.biases_variables * tf.squeeze(self.phybiasesB)
+            pre_weights_A = self.phyweightsA
+            pre_weights_B = self.weights_variables * self.phyweightsB
+            prev_layer_A = tf.squeeze(tf.linalg.matmul(pre_weights_A, inputs), axis=-1) + tf.squeeze(self.phybiasesA)
+            prev_layer_B = tf.squeeze(tf.linalg.matmul(pre_weights_B, inputs), axis=-1) + pre_bias
+
+            if self.activation == 'sigmoid':
+                prev_layer_B = tf.sigmoid(prev_layer_B)
+            elif self.activation == 'relu':
+                prev_layer_B = tf.nn.relu(prev_layer_B)
+            elif self.activation == 'tanh':
+                prev_layer_B = tf.nn.tanh(prev_layer_B)
+            y = prev_layer_A + prev_layer_B
         else:
             logits = tf.squeeze(tf.linalg.matmul(self.weights_variables, inputs), axis=-1) + self.biases_variables
 
-        if self.activation == 'sigmoid':
-            y = tf.sigmoid(logits)
-        elif self.activation == 'relu':
-            y = tf.nn.relu(logits)
-        elif self.activation == 'lin':
-            aa = 0.001
-            bb = 100
-            y = tf.multiply(logits, aa) + bb
-        elif self.activation == 'tanh':
-            y = tf.nn.tanh(logits)
-        else:
-            y = logits
+            if self.activation == 'sigmoid':
+                y = tf.sigmoid(logits)
+            elif self.activation == 'relu':
+                y = tf.nn.relu(logits)
+            elif self.activation == 'lin':
+                aa = 0.001
+                bb = 100
+                y = tf.multiply(logits, aa) + bb
+            elif self.activation == 'tanh':
+                y = tf.nn.tanh(logits)
+            else:
+                y = logits
         return y
 
 
@@ -377,8 +388,50 @@ def get_knowledge_matrix():
     editing_matrix = []
 
     for k in range(len(params['phyweightsA'])):
-        weights_matrix = params['phyweightsB'][k]
-        bias_matrix = params['phybiasesB'][k]
-        editing_matrix.append([weights_matrix, bias_matrix])
+        editing_matrix.append([params['phyweightsA'][k], params['phyweightsB'][k],
+                               params['phybiasesA'][k], params['phybiasesB'][k]])
+
+    return editing_matrix
+
+
+def get_knowledge_matrix_new():
+    #####Extract Knowledge Matrix###############################################################################################
+    out1 = 10
+    out2 = 8
+    a_input_dim = 27
+    params = {}
+    ######first layer######
+    CPhy_lay1_A = np.zeros((out1, a_input_dim), dtype=np.float32)
+    CPhy_lay1_B = np.ones((out1, a_input_dim), dtype=np.float32)
+    CphyBias_lay1_A = np.zeros((out1, 1), dtype=np.float32)
+    CphyBias_lay1_B = np.ones((out1, 1), dtype=np.float32)
+    #######################
+
+    ######second layer######
+    out1_a = 65
+
+    CPhy_lay2_A = np.zeros((out2, out1_a), dtype=np.float32)
+    CPhy_lay2_B = np.ones((out2, out1_a), dtype=np.float32)
+    CphyBias_lay2_A = np.zeros((out2, 1), dtype=np.float32)
+    CphyBias_lay2_B = np.ones((out2, 1), dtype=np.float32)
+    #######################
+
+    ######third layer######
+    CPhy_lay3_A = np.zeros((1, out2), dtype=np.float32)
+    CPhy_lay3_B = np.ones((1, out2), dtype=np.float32)
+    CphyBias_lay3_A = np.zeros((1, 1), dtype=np.float32)
+    CphyBias_lay3_B = np.ones((1, 1), dtype=np.float32)
+    #######################
+
+    params['phyweightsA'] = [CPhy_lay1_A, CPhy_lay2_A, CPhy_lay3_A]
+    params['phyweightsB'] = [CPhy_lay1_B, CPhy_lay2_B, CPhy_lay3_B]
+    params['phybiasesA'] = [CphyBias_lay1_A, CphyBias_lay2_A, CphyBias_lay3_A]
+    params['phybiasesB'] = [CphyBias_lay1_B, CphyBias_lay2_B, CphyBias_lay3_B]
+
+    editing_matrix = []
+
+    for k in range(len(params['phyweightsA'])):
+        editing_matrix.append([params['phyweightsA'][k], params['phyweightsB'][k],
+                               params['phybiasesA'][k], params['phybiasesB'][k]])
 
     return editing_matrix

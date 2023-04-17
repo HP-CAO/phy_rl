@@ -36,7 +36,8 @@
         "random_reset_eval": false,
         "update_reference_model": true,
         "sparse_reset": false,
-        "use_ubc_lya_reward": false
+        "use_ubc_lya_reward": false,
+        "add_uu_dis": false
     },
     "agent_params": {
         "action_noise": "no",

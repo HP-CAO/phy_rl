@@ -39,6 +39,7 @@ class CartpoleParams:
         self.update_reference_model = True
         self.sparse_reset = False
         self.use_ubc_lya_reward = True
+        self.add_uu_dis = False
 
 
 class Cartpole(gym.Env):
@@ -62,7 +63,7 @@ class Cartpole(gym.Env):
 
         self.states_dim = 4  # x, x_dot, theta, theta_dot
         self.states_observations_dim = 5  # x, x_dot, s_theta, c_theta, theta_dot
-        self.states_observations_refer_dim = 4 # error between the states of ref and real
+        self.states_observations_refer_dim = 4  # error between the states of ref and real
         self.action_dim = 1  # force input or voltage
 
         self.matrix_A = np.array([[1, 0.03333333, 0, 0],
@@ -103,7 +104,7 @@ class Cartpole(gym.Env):
             force_res = 0.7400 * x + 3.6033 * x_dot + 35.3534 * theta + 6.9982 * theta_dot  # residual control commands
             force = force + force_res  # RL control commands + residual control commands
 
-        force = np.clip(force, a_min=-1*self.params.force_mag, a_max=1*self.params.force_mag)
+        force = np.clip(force, a_min=-1 * self.params.force_mag, a_max=1 * self.params.force_mag)
 
         costheta = math.cos(theta)
         sintheta = math.sin(theta)
@@ -129,11 +130,17 @@ class Cartpole(gym.Env):
                        (self.half_length * (4.0 / 3.0 - self.params.mass_pole * costheta ** 2 / self.total_mass))
             xacc = temp - self.pole_mass_length_half * thetaacc * costheta / self.total_mass
 
+        uu1 = 0
+        uu2 = 0
+
+        if self.params.add_uu_dis:
+            uu1, uu2 = get_unk_unk_dis()
+
         if self.params.kinematics_integrator == 'euler':
             x = x + self.tau * x_dot
-            x_dot = x_dot + self.tau * xacc
+            x_dot = x_dot + self.tau * (xacc + uu1)
             theta = theta + self.tau * theta_dot
-            theta_dot = theta_dot + self.tau * thetaacc
+            theta_dot = theta_dot + self.tau * (thetaacc + uu2)
             failed = self.is_failed(x, theta_dot)
 
         else:  # semi-implicit euler
@@ -390,3 +397,13 @@ def observations2states(observations, failed):
     x, x_dot, s_theta, c_theta, theta_dot = observations[:5]
     states = [x, x_dot, np.arctan2(s_theta, c_theta), theta_dot, failed]
     return states
+
+
+def get_unk_unk_dis():
+    rng = np.random.default_rng(seed=1)
+    a = 2*np.random.random(1)
+    b = 2*np.random.random(1)
+    uu1 = -rng.beta(a, b) + rng.beta(a, b)
+    uu2 = -rng.beta(a, b) + rng.beta(a, b)
+    return uu1[0], uu2[0]
+

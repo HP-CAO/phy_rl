@@ -72,6 +72,10 @@ docs/_build/
 
 # PyBuilder
 target/
+logs/
+logs_old/
+models/
+models_old/
 
 # Jupyter Notebook
 .ipynb_checkpoints
@@ -126,6 +130,4 @@ dmypy.json
 # Pyre type checker
 .pyre/
 .idea/
-models_old/
 lib/.idea
-logs_old/
