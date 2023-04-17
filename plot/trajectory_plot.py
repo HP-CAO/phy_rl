@@ -55,6 +55,6 @@ def plot_trajectory(trajectory_tensor, reference_trajectory_tensor=None, name=''
 
 
 if __name__ == '__main__':
-    res_trajectory = np.load("res.npy")
-    linear_trajectory = np.load("linear.npy")
+    res_trajectory = np.load("CDC/res.npy")
+    linear_trajectory = np.load("CDC/linear.npy")
     plot_trajectory(res_trajectory, linear_trajectory, "compare")

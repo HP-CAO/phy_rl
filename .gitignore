@@ -25,6 +25,10 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+models
+logs
+log_old
+model_old
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -49,7 +53,7 @@ coverage.xml
 *.py,cover
 .hypothesis/
 .pytest_cache/
-*.pdf
+
 # Translations
 *.mo
 *.pot
@@ -72,10 +76,6 @@ docs/_build/
 
 # PyBuilder
 target/
-logs/
-logs_old/
-models/
-models_old/
 
 # Jupyter Notebook
 .ipynb_checkpoints
@@ -86,7 +86,6 @@ ipython_config.py
 *.png
 # pyenv
 .python-version
-
 
 # pipenv
 #   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
@@ -131,4 +130,6 @@ dmypy.json
 # Pyre type checker
 .pyre/
 .idea/
+models_old/
 lib/.idea
+logs_old/

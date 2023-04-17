@@ -7,8 +7,8 @@ import seaborn as sns
 import pandas as pd
 from types import SimpleNamespace as Namespace
 
-path_reward_source = "plot/data_source/reward plot"
-path_critic_source = "plot/data_source/critic loss plot"
+path_reward_source = "plot/NIP/data_source/reward plot"
+path_critic_source = "plot/NIP/data_source/critic loss plot"
 path_list = [path_reward_source, path_critic_source]
 
 plot_training_steps = 200000
@@ -76,13 +76,13 @@ for id, sour_path in enumerate(path_list):
 
 fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(6, 9.5))
 
-l1 = sns.lineplot(data=data_frame_list[0], ax=ax1, x="label", y="Value", label=legend_list[3], legend=False)
-l2 = sns.lineplot(data=data_frame_list[1], ax=ax1, x="label", y="Value", label=legend_list[4], legend=False)
-l3 = sns.lineplot(data=data_frame_list[2], ax=ax1, x="label", y="Value", label=legend_list[5], legend=False)
+l1 = sns.lineplot(data=data_frame_list[0], ax=ax1, x="label", y="Value", label=legend_list[0], legend=False)
+l2 = sns.lineplot(data=data_frame_list[1], ax=ax1, x="label", y="Value", label=legend_list[1], legend=False)
+# l3 = sns.lineplot(data=data_frame_list[2], ax=ax1, x="label", y="Value", label=legend_list[5], legend=False)
 
-l4 = sns.lineplot(data=data_frame_list[3], ax=ax2, x="label", y="Value", label=legend_list[3], legend=False)
-l5 = sns.lineplot(data=data_frame_list[4], ax=ax2, x="label", y="Value", label=legend_list[4], legend=False)
-l6 = sns.lineplot(data=data_frame_list[5], ax=ax2, x="label", y="Value", label=legend_list[5], legend=False)
+l4 = sns.lineplot(data=data_frame_list[2], ax=ax2, x="label", y="Value", label=legend_list[2], legend=False)
+l5 = sns.lineplot(data=data_frame_list[3], ax=ax2, x="label", y="Value", label=legend_list[3], legend=False)
+# l6 = sns.lineplot(data=data_frame_list[5], ax=ax2, x="label", y="Value", label=legend_list[5], legend=False)
 
 # fig.legend([l1, l2, l3], labels=legend_list,
 #            loc="lower left", fontsize='small',
@@ -114,5 +114,5 @@ plt.subplots_adjust(wspace=0.22)
 
 
 plt.savefig(f'plot/training_all.pdf', format='pdf')
-plt.tight_layout()
+# plt.tight_layout()
 # plt.savefig(f'plot/training_all.png', dpi=300)

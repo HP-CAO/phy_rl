@@ -8,7 +8,7 @@ import numpy as np
 
 class TaylorParams:
     def __init__(self):
-        self.dense_dims = [10, 8]  # dim for hidden layers, not including input dim and output dim
+        self.dense_dims = [20, 32]  # dim for hidden layers, not including input dim and output dim
         self.aug_order = [1, 1, 0]  # augmentation order for all hidden layers. 2 will lead to 3rd order
         self.initializer_w = 'tn'
         self.initializer_b = 'uniform'
@@ -284,89 +284,26 @@ def pyselu(x, inx_unk):
 
 
 def get_knowledge_matrix():
-    out1 = 10
-    out2 = 8
+    out1 = 20
+    out2 = 32
     a_input_dim = 27
     params = {}
 
     CPhy_lay1_A = np.zeros((out1, a_input_dim), dtype=np.float32)
-    CPhy_lay1_B = np.ones((out1, a_input_dim), dtype=np.float32)
+    CPhy_lay1_B = np.ones((out1, a_input_dim), dtype=np.float32) # 10 x 27   10* 27 _ 27 *1
     CphyBias_lay1_A = np.zeros((out1, 1), dtype=np.float32)
     CphyBias_lay1_B = np.ones((out1, 1), dtype=np.float32)
 
-    CPhy_lay1_B[0][0] = 0
-    CPhy_lay1_B[0][1] = 0
-    CPhy_lay1_B[0][2] = 0
-    CPhy_lay1_B[0][3] = 0
-    CPhy_lay1_B[0][4] = 0
-    CPhy_lay1_B[0][5] = 0
-
-    CPhy_lay1_B[1][0] = 0
-    CPhy_lay1_B[1][1] = 0
-    CPhy_lay1_B[1][2] = 0
-    CPhy_lay1_B[1][3] = 0
-    CPhy_lay1_B[1][4] = 0
-    CPhy_lay1_B[1][5] = 0
-
-    CPhy_lay1_B[2][0] = 0
-    CPhy_lay1_B[2][1] = 0
-    CPhy_lay1_B[2][2] = 0
-    CPhy_lay1_B[2][3] = 0
-    CPhy_lay1_B[2][4] = 0
-    CPhy_lay1_B[2][5] = 0
-
-    CPhy_lay1_B[3][0] = 0
-    CPhy_lay1_B[3][1] = 0
-    CPhy_lay1_B[3][2] = 0
-    CPhy_lay1_B[3][3] = 0
-    CPhy_lay1_B[3][4] = 0
-    CPhy_lay1_B[3][5] = 0
-
-    CPhy_lay1_B[4][0] = 0
-    CPhy_lay1_B[4][1] = 0
-    CPhy_lay1_B[4][2] = 0
-    CPhy_lay1_B[4][3] = 0
-    CPhy_lay1_B[4][4] = 0
-    CPhy_lay1_B[4][5] = 0
-
-    CPhy_lay1_B[5][0] = 0
-    CPhy_lay1_B[5][1] = 0
-    CPhy_lay1_B[5][2] = 0
-    CPhy_lay1_B[5][3] = 0
-    CPhy_lay1_B[5][4] = 0
-    CPhy_lay1_B[5][5] = 0
-
-    CPhy_lay1_B[6][0] = 0
-    CPhy_lay1_B[6][1] = 0
-    CPhy_lay1_B[6][2] = 0
-    CPhy_lay1_B[6][3] = 0
-    CPhy_lay1_B[6][4] = 0
-    CPhy_lay1_B[6][5] = 0
-
-    CPhy_lay1_B[7][0] = 0
-    CPhy_lay1_B[7][1] = 0
-    CPhy_lay1_B[7][2] = 0
-    CPhy_lay1_B[7][3] = 0
-    CPhy_lay1_B[7][4] = 0
-    CPhy_lay1_B[7][5] = 0
-
-    CPhy_lay1_B[8][0] = 0
-    CPhy_lay1_B[8][1] = 0
-    CPhy_lay1_B[8][2] = 0
-    CPhy_lay1_B[8][3] = 0
-    CPhy_lay1_B[8][4] = 0
-    CPhy_lay1_B[8][5] = 0
-
-    CPhy_lay1_B[9][0] = 0
-    CPhy_lay1_B[9][1] = 0
-    CPhy_lay1_B[9][2] = 0
-    CPhy_lay1_B[9][3] = 0
-    CPhy_lay1_B[9][4] = 0
-    CPhy_lay1_B[9][5] = 0
-    #######################
+    for i in range(out1):
+        CPhy_lay1_B[i][0] = 0
+        CPhy_lay1_B[i][1] = 0
+        CPhy_lay1_B[i][2] = 0
+        CPhy_lay1_B[i][3] = 0
+        CPhy_lay1_B[i][4] = 0
+        CPhy_lay1_B[i][5] = 0
 
     ######second layer######
-    out1_a = 65
+    out1_a = 230
 
     CPhy_lay2_A = np.zeros((out2, out1_a), dtype=np.float32)
     CPhy_lay2_B = np.ones((out2, out1_a), dtype=np.float32)
