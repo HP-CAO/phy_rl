@@ -49,7 +49,7 @@ coverage.xml
 *.py,cover
 .hypothesis/
 .pytest_cache/
-
+*.pdf
 # Translations
 *.mo
 *.pot
@@ -86,6 +86,7 @@ ipython_config.py
 *.png
 # pyenv
 .python-version
+
 
 # pipenv
 #   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
