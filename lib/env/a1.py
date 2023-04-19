@@ -1,13 +1,9 @@
 """Gym wrapper for a1 robot"""
-import math
 import gym
 from gym.utils import seeding
 import numpy as np
 import pybullet
 from pybullet_utils import bullet_client as bc
-import time
-import os
-import random
 
 URDF_A1 = "lib/env/a1/urdf/a1.urdf"
 URDF_PLANE = "lib/env/a1/plane.urdf"
@@ -20,7 +16,7 @@ class A1Params:
     def __init__(self):
         self.x_threshold = 0.5
         self.if_render = False
-        self.control_frequency = 10
+        self.control_frequency = 500
 
 
 class A1Robot(gym.Env):
@@ -33,54 +29,64 @@ class A1Robot(gym.Env):
         self._observations = []
         self.params = params
         self._renders = self.params.if_render
+
         if self._renders:
             self._p = bc.BulletClient(connection_mode=pybullet.GUI)
         else:
             self._p = bc.BulletClient()
 
         self.seed()
-        self.action_bound = 1
+        self.actionBound = 1  # double check with the robot
         self._quadruped = None
         self._plane = None
-        self._timestep = 1 / self.params.control_frequency
+        self._timeStep = 1 / self.params.control_frequency
         self._observation = []
-        self._max_force = 50
+        self._maxForce = 20
         self._envStepCounter = 0
         self._jointIds = []
+        self._initialize()
+
+    def _initialize(self):
+        self.reset()
 
     def reset(self):
         self._envStepCounter = 0
         self._p.resetSimulation()
-        self._p.setGravity(0, 0, -9.8)
-        self._p.setTimeStep(1. / 500)
-        self._quadruped = self._p.loadURDF(URDF_A1, [0, 0, 0.48], [0, 0, 0, 1], float=URDF_Flags, useFixedBase=False)
         self._plane = self._p.loadURDF(URDF_PLANE)
+        self._p.setGravity(0, 0, -9.8)
+        self._p.setTimeStep(self._timeStep)
+        self._quadruped = self._p.loadURDF(URDF_A1, [0, 0, 0.48], [0, 0, 0, 1], flags=URDF_Flags, useFixedBase=False)
+        self._quadruped_1 = self._p.loadURDF(URDF_A1, [1, 0, 0.48], [0, 0, 0, 1], flags=URDF_Flags, useFixedBase=False)
+        self._quadruped_2 = self._p.loadURDF(URDF_A1, [0, 1, 0.48], [0, 0, 0, 1], flags=URDF_Flags, useFixedBase=False)
 
         lower_legs = [2, 5, 8, 11]
+
         for l0 in lower_legs:
             for l1 in lower_legs:
                 if l1 > l0:
                     enableCollision = 1
+                    # print("collision for pair", l0, l1, self._p.getJointInfo(self._quadruped, l0)[12],
+                    #       self._p.getJointInfo(self._quadruped, l1)[12], "enabled=", enableCollision)
                     self._p.setCollisionFilterPair(self._quadruped, self._quadruped, 2, 5, enableCollision)
 
         self._p.enableJointForceTorqueSensor(self._quadruped, 5)  # here we need to know everything for the joint
+        self._p.addUserDebugLine([0, 0, 0], [1, 1, 1])
 
         self._jointIds = []
 
         for j in range(self._p.getNumJoints(self._quadruped)):
             self._p.changeDynamics(self._quadruped, j, linearDamping=0, angularDamping=0)
             info = self._p.getJointInfo(self._quadruped, j)
-            jointName = info[1]
+            # jointName = info[1]
             jointType = info[2]
 
             if jointType == self._p.JOINT_PRISMATIC or jointType == self._p.JOINT_REVOLUTE:  # only add non-fixed joint
                 self._jointIds.append(j)
 
-        for i in range(100):
-            self._p.stepSimulation()
-        self._p.setTimeStep(self._timestep)
-
+        self._p.getCameraImage(480, 320)
+        self._p.setRealTimeSimulation(0)
         self._observation = self.getExtendedObservation()
+        print("<==========   Environment has been reset   ==========>")
         return np.array(self._observation)
 
     def _reward(self):
@@ -94,25 +100,41 @@ class A1Robot(gym.Env):
         self.np_random, seed = seeding.np_random(seed)
 
     def getExtendedObservation(self):
+        """
+        The observation of the robot consists of: current state x_t_dim, previous_action at_1 (12);
+        """
+        base_pos, orn = self._p.getBasePositionAndOrientation(self._quadruped)  # pose of the dog
+        pos_v, orn_v = self._p.getBaseVelocity(self._quadruped)  # velocity of the dog
+
+        # observations for joints
+        joint_states = self._p.getJointStates(self._quadruped, range(
+            12))  # for each join it contains (position, velocity, reaction_forces(6-dim), applied torque)
+        joints_states = np.array([np.concatenate(joint_states[i], axis=-1) for i in self._jointIds])
+
+        joints_position = joints_states[:, 0]  # 12
+        joints_velocity = joints_states[:, 1]  # 12
+        joints_torque = joints_states[:, -1]  # 12
+
+        """
+        state: joint positions (12), joint velocities (12), roll pitch angles of the boby (2), foot contact indicators (4) values
+        action: position control for the 12 robot joints which then use pd controller to convert it to the torques t 
+        """
+
         self._observation = [0., ] * 4
         return self._observations
 
     def step(self, action):
         """
-        Here action is a 12-dim array
+        Here action at is the desired join position for the 12 robot joints.
         """
-        if self._renders:
-            basePos, orn = self._p.getBasePositionAndOrientation(self._quadruped)
-            # self._p.resetDebugVisualizerCamera(1, 30, -40, basePos)
-            time.sleep(self._timestep)
-
         for j, a in enumerate(action):
             self._p.setJointMotorControl2(self._quadruped, self._jointIds[j],
-                                          self._p.POSITION_CONTROL, a, force=self._max_force)
+                                          self._p.POSITION_CONTROL, a, force=self._maxForce)
 
         self._p.stepSimulation()
-        self._observation = self.getExtendedObservation()
         self._envStepCounter += 1
+
+        self._observation = self.getExtendedObservation()
         reward = self._reward()
         done = self._termination()
 
@@ -124,10 +146,10 @@ class A1Robot(gym.Env):
             return np.array([])
 
         base_pos, orn = self._p.getBasePositionAndOrientation(self._quadruped)
-        view_matrix = self._p.computeViewMatrixFromYawPitchRoll(cameraTargetPosition=base_pos,
-                                                                distance=self._cam_dist,
-                                                                yaw=self._cam_yaw,
-                                                                pitch=self._cam_pitch,
+        view_matrix = self._p.computeViewMatrixFromYawPitchRoll(cameraTargetPosition=(0.3, 0, 0.48),
+                                                                distance=0.1,
+                                                                yaw=-90,
+                                                                pitch=0,
                                                                 roll=0,
                                                                 upAxisIndex=2)
         proj_matrix = self._p.computeProjectionMatrixFOV(fov=60,
@@ -140,6 +162,7 @@ class A1Robot(gym.Env):
                                                   viewMatrix=view_matrix,
                                                   projectionMatrix=proj_matrix,
                                                   renderer=pybullet.ER_BULLET_HARDWARE_OPENGL)
+
         rgb_array = np.array(px)
         rgb_array = rgb_array[:, :, :3]
         return rgb_array

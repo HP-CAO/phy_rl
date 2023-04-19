@@ -1,16 +1,25 @@
 import pybullet as p
 import time
 import scipy
+import math
 
 # class Dog:
 p.connect(p.GUI)
-plane = p.loadURDF("lib/env/a1/plane.urdf")
 p.setGravity(0, 0, -9.8)
+q = p.getQuaternionFromEuler([0.5 * math.pi, 0, 0.5 * math.pi])
+plane = p.loadURDF("lib/env/a1/plane.urdf")
+
+stopsign = p.loadURDF("lib/env/a1/stopsign.urdf", [-3.5, 0, 0.1], q)
+
+marble = p.loadURDF("lib/env/a1/marble_cube.urdf", [1, 2, 0.5], [0, 0, 0, 1])
 p.setTimeStep(1. / 500)
 # p.setDefaultContactERP(0)
 # urdfFlags = p.URDF_USE_SELF_COLLISION+p.URDF_USE_SELF_COLLISION_EXCLUDE_ALL_PARENTS
+
 urdfFlags = p.URDF_USE_SELF_COLLISION
-quadruped = p.loadURDF("lib/env/a1/urdf/a1.urdf", [0, 0, 0.48], [0, 0, 0, 1], flags=urdfFlags, useFixedBase=False)
+q_1 = p.getQuaternionFromEuler([0, 0, math.pi])
+
+quadruped = p.loadURDF("lib/env/a1/urdf/a1.urdf", [0, 0, 0.48], q_1, flags=urdfFlags, useFixedBase=False)
 
 # enable collision between lower legs
 for j in range(p.getNumJoints(quadruped)):
@@ -29,7 +38,7 @@ jointIds = []
 paramIds = []
 
 p.enableJointForceTorqueSensor(quadruped, 5)
-maxForceId = p.addUserDebugParameter("maxForce", 0, 100, 20) # this is made for debuging
+maxForceId = p.addUserDebugParameter("maxForce", 0, 100, 20)  # this is made for debuging
 p.addUserDebugLine([0, 0, 0], [1, 1, 1])
 
 for j in range(p.getNumJoints(quadruped)):
@@ -46,9 +55,7 @@ p.getCameraImage(480, 320)
 p.setRealTimeSimulation(0)
 
 joints = []
-i = 1
-while (1):
-    i += 1
+while 1:
     with open("lib/env/a1/mocap.txt", "r") as filestream:
         for line in filestream:
             maxForce = p.readUserDebugParameter(maxForceId)
@@ -62,22 +69,22 @@ while (1):
                 p.setJointMotorControl2(quadruped, jointIds[j], p.POSITION_CONTROL, targetPos, force=maxForce)
             pos, orn = p.getBasePositionAndOrientation(quadruped)
             pos_v, orn_v = p.getBaseVelocity(quadruped)
+            print(pos_v)
             joint_states = p.getJointStates(quadruped, range(
                 12))  # for each join it contains (position, velocity, reaction_forces(6-dim), applied torque)
             link_states = p.getLinkStates(quadruped, range(12))
             # print(link_states[5])
             # print(joint_states[5])
             p.stepSimulation()
-            for lower_leg in lower_legs:
-                # print("points for ", quadruped, " link: ", lower_leg)
-                pts = p.getContactPoints(quadruped, -1, lower_leg)
-                # print("num points=", len(pts))
-                # print(pts)
-                # for pt in pts:
-                # print(pt)
+            # for lower_leg in lower_legs:
+            # print("points for ", quadruped, " link: ", lower_leg)
+            # pts = p.getContactPoints(quadruped, -1, lower_leg)
+            # print("num points=", len(pts))
+            # print(pts)
+            # for pt in pts:
+            # print(pt)
             # print(pos, orn)
             ##### Calculating reward:
-            print(i)
             time.sleep(1. / 500.)
 
 # for j in range (p.getNumJoints(quadruped)):
