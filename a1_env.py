@@ -8,6 +8,7 @@ p.connect(p.GUI)
 p.setGravity(0, 0, -9.8)
 q = p.getQuaternionFromEuler([0.5 * math.pi, 0, 0.5 * math.pi])
 plane = p.loadURDF("lib/env/a1/plane.urdf")
+print(plane)
 
 stopsign = p.loadURDF("lib/env/a1/stopsign.urdf", [-3.5, 0, 0.1], q)
 
@@ -20,7 +21,7 @@ urdfFlags = p.URDF_USE_SELF_COLLISION
 q_1 = p.getQuaternionFromEuler([0, 0, math.pi])
 
 quadruped = p.loadURDF("lib/env/a1/urdf/a1.urdf", [0, 0, 0.48], q_1, flags=urdfFlags, useFixedBase=False)
-
+print(quadruped)
 # enable collision between lower legs
 for j in range(p.getNumJoints(quadruped)):
     print(p.getJointInfo(quadruped, j))
@@ -44,7 +45,7 @@ p.addUserDebugLine([0, 0, 0], [1, 1, 1])
 for j in range(p.getNumJoints(quadruped)):
     p.changeDynamics(quadruped, j, linearDamping=0, angularDamping=0)
     info = p.getJointInfo(quadruped, j)
-    # print(info)
+    print(info)
     jointName = info[1]
     jointType = info[2]
     if jointType == p.JOINT_PRISMATIC or jointType == p.JOINT_REVOLUTE:
@@ -69,10 +70,12 @@ while 1:
                 p.setJointMotorControl2(quadruped, jointIds[j], p.POSITION_CONTROL, targetPos, force=maxForce)
             pos, orn = p.getBasePositionAndOrientation(quadruped)
             pos_v, orn_v = p.getBaseVelocity(quadruped)
-            print(pos_v)
             joint_states = p.getJointStates(quadruped, range(
                 12))  # for each join it contains (position, velocity, reaction_forces(6-dim), applied torque)
             link_states = p.getLinkStates(quadruped, range(12))
+            # print(p.getContactPoints(quadruped, plane))
+            # print(len(p.getContactPoints(quadruped, plane)))
+            print(p.getContactPoints(quadruped, plane))
             # print(link_states[5])
             # print(joint_states[5])
             p.stepSimulation()

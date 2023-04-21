@@ -1,4 +1,6 @@
 """Gym wrapper for a1 robot"""
+import math
+
 import gym
 from gym.utils import seeding
 import numpy as np
@@ -56,8 +58,6 @@ class A1Robot(gym.Env):
         self._p.setGravity(0, 0, -9.8)
         self._p.setTimeStep(self._timeStep)
         self._quadruped = self._p.loadURDF(URDF_A1, [0, 0, 0.48], [0, 0, 0, 1], flags=URDF_Flags, useFixedBase=False)
-        self._quadruped_1 = self._p.loadURDF(URDF_A1, [1, 0, 0.48], [0, 0, 0, 1], flags=URDF_Flags, useFixedBase=False)
-        self._quadruped_2 = self._p.loadURDF(URDF_A1, [0, 1, 0.48], [0, 0, 0, 1], flags=URDF_Flags, useFixedBase=False)
 
         lower_legs = [2, 5, 8, 11]
 
@@ -101,9 +101,14 @@ class A1Robot(gym.Env):
 
     def getExtendedObservation(self):
         """
+        state: joint positions (12), joint velocities (12), roll pitch angles of the boby (2), foot contact indicators (4) values
+        action: position control for the 12 robot joints which then use pd controller to convert it to the torques t
+        """
+
+        """
         The observation of the robot consists of: current state x_t_dim, previous_action at_1 (12);
         """
-        base_pos, orn = self._p.getBasePositionAndOrientation(self._quadruped)  # pose of the dog
+        pos, orn = self._p.getBasePositionAndOrientation(self._quadruped)  # pose of the dog
         pos_v, orn_v = self._p.getBaseVelocity(self._quadruped)  # velocity of the dog
 
         # observations for joints
@@ -115,12 +120,32 @@ class A1Robot(gym.Env):
         joints_velocity = joints_states[:, 1]  # 12
         joints_torque = joints_states[:, -1]  # 12
 
-        """
-        state: joint positions (12), joint velocities (12), roll pitch angles of the boby (2), foot contact indicators (4) values
-        action: position control for the 12 robot joints which then use pd controller to convert it to the torques t 
-        """
+        contact_points = self._p.getContactPoints(self._quadruped, self._plane)
+        feet_contact_states = [0, ] * 4
 
-        self._observation = [0., ] * 4
+        if len(contact_points) != 0:
+            # the order of the link index is {5, 9, 13, 17}
+            for contact in contact_points:
+                if contact[4] == 5:
+                    feet_contact_states[0] = 1
+                if contact[4] == 9:
+                    feet_contact_states[1] = 1
+                if contact[4] == 13:
+                    feet_contact_states[2] = 1
+                if contact[4] == 17:
+                    feet_contact_states[3] = 1
+
+        self._basePos = pos
+        self._baseOrn = orn
+        self._jointsPos = joints_position
+        self._jointsVelocity = joints_velocity
+        self._jointsTorque = joints_torque
+        self._contact_feet = contact_points
+        self._baseVelocity = pos_v
+        self._baseAngularVelocity = orn_v
+
+        self._observations = np.concatenate([joints_position, joints_velocity, pos, orn[:2], feet_contact_states])
+
         return self._observations
 
     def step(self, action):
@@ -133,6 +158,42 @@ class A1Robot(gym.Env):
 
         self._p.stepSimulation()
         self._envStepCounter += 1
+
+        pos, orn = self._p.getBasePositionAndOrientation(self._quadruped)  # pose of the dog
+        pos_v, orn_v = self._p.getBaseVelocity(self._quadruped)  # velocity of the dog
+
+        # observations for joints
+        joint_states = self._p.getJointStates(self._quadruped, range(
+            12))  # for each join it contains (position, velocity, reaction_forces(6-dim), applied torque)
+        joints_states = np.array([np.concatenate(joint_states[i], axis=-1) for i in self._jointIds])
+
+        joints_position = joints_states[:, 0]  # 12
+        joints_velocity = joints_states[:, 1]  # 12
+        joints_torque = joints_states[:, -1]  # 12
+
+        contact_points = self._p.getContactPoints(self._quadruped, self._plane)
+        feet_contact_states = [0, ] * 4
+
+        if len(contact_points) != 0:
+            # the order of the link index is {5, 9, 13, 17}
+            for contact in contact_points:
+                if contact[4] == 5:
+                    feet_contact_states[0] = 1
+                if contact[4] == 9:
+                    feet_contact_states[1] = 1
+                if contact[4] == 13:
+                    feet_contact_states[2] = 1
+                if contact[4] == 17:
+                    feet_contact_states[3] = 1
+
+        self._basePos = pos
+        self._baseOrn = orn
+        self._jointsPos = joints_position
+        self._jointsVelocity = joints_velocity
+        self._jointsTorque = joints_torque
+        self._contact_feet = contact_points
+        self._baseVelocity = pos_v
+        self._baseAngularVelocity = orn_v
 
         self._observation = self.getExtendedObservation()
         reward = self._reward()
@@ -168,4 +229,12 @@ class A1Robot(gym.Env):
         return rgb_array
 
     def _termination(self):  # we need to implement the crash
-        return self._envStepCounter > 1000
+        """
+        One episode would terminate when the height of the body will be below 0.28m
+        or the episode will exceed the maximum steps = 1000
+        """
+        termination = False
+        if self._observations[2] < 0.28 or self._observations[3] > 0.4 or self._observations[4] > 0.2:
+            termination = False
+
+        return termination
