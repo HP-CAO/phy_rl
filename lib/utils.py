@@ -53,6 +53,8 @@ class OrnsteinUhlenbeckActionNoise(ActionNoise):
 def shape(exp):
     if type(exp) is list:
         return len(exp)
+    if type(exp) is np.ndarray:
+        return len(exp)
     else:
         return 1
 
@@ -82,6 +84,7 @@ class ReplayMemory(object):
         self.memory = None
 
     def initialize(self, experience):
+
         self.memory = [np.zeros(shape=(self.size, shape(exp)), dtype=type_of(exp)) for exp in experience]
         self.memory.append(np.zeros(shape=self.size, dtype=float))
 

@@ -1,4 +1,5 @@
 """Gym wrapper for a1 robot"""
+import copy
 import math
 
 import gym
@@ -18,7 +19,11 @@ class A1Params:
     def __init__(self):
         self.x_threshold = 0.5
         self.if_render = False
-        self.control_frequency = 500
+        self.control_frequency = 100
+        self.observe_reference_states = False
+        self.random_reset_eval = False
+        self.random_reset_train = False
+        self.action_bound = 1.5
 
 
 class A1Robot(gym.Env):
@@ -31,14 +36,9 @@ class A1Robot(gym.Env):
         self._observations = []
         self.params = params
         self._renders = self.params.if_render
-
-        if self._renders:
-            self._p = bc.BulletClient(connection_mode=pybullet.GUI)
-        else:
-            self._p = bc.BulletClient()
-
         self.seed()
         self.actionBound = 1  # double check with the robot
+        self.action_dim = 12
         self._quadruped = None
         self._plane = None
         self._timeStep = 1 / self.params.control_frequency
@@ -46,18 +46,51 @@ class A1Robot(gym.Env):
         self._maxForce = 20
         self._envStepCounter = 0
         self._jointIds = []
+
+        self._basePos = []
+        self._baseOrn = []
+        self._jointsPos = []
+        self._jointsPosPre = []
+        self._jointsVelocity = []
+        self._jointsTorque = []
+        self._jointsTorquePre = []
+
+        self._contact_feet = []
+        self._baseVelocity = []
+        self._baseAngularVelocity = []
+        self._observationPre = []
+        self._observation = []
+        self._actions = []
+        self._feetVelocity = []
+        self._feetForce = []
+        self._feetForcePre = []
+        self._feetLinkId = [5, 9, 13, 17]
+        self._p = None
+
         self._initialize()
+        self.states_observations_refer_dim = 0  # todo check when we use the reference model
+
+    def states_observations_dim(self):
+        return len(self.getExtendedObservation())
 
     def _initialize(self):
         self.reset()
 
-    def reset(self):
+    def random_reset(self):
+        pass
+
+    def reset(self, reset_states=None, vis=False):
+        if self._renders or vis:
+            self._p = bc.BulletClient(connection_mode=pybullet.GUI)
+        else:
+            self._p = bc.BulletClient()
+
         self._envStepCounter = 0
         self._p.resetSimulation()
         self._plane = self._p.loadURDF(URDF_PLANE)
         self._p.setGravity(0, 0, -9.8)
         self._p.setTimeStep(self._timeStep)
-        self._quadruped = self._p.loadURDF(URDF_A1, [0, 0, 0.48], [0, 0, 0, 1], flags=URDF_Flags, useFixedBase=False)
+        self._quadruped = self._p.loadURDF(URDF_A1, [-3, 0, 0.40], [0, 0, 0, 1], flags=URDF_Flags, useFixedBase=False)
 
         lower_legs = [2, 5, 8, 11]
 
@@ -65,11 +98,8 @@ class A1Robot(gym.Env):
             for l1 in lower_legs:
                 if l1 > l0:
                     enableCollision = 1
-                    # print("collision for pair", l0, l1, self._p.getJointInfo(self._quadruped, l0)[12],
-                    #       self._p.getJointInfo(self._quadruped, l1)[12], "enabled=", enableCollision)
                     self._p.setCollisionFilterPair(self._quadruped, self._quadruped, 2, 5, enableCollision)
 
-        self._p.enableJointForceTorqueSensor(self._quadruped, 5)  # here we need to know everything for the joint
         self._p.addUserDebugLine([0, 0, 0], [1, 1, 1])
 
         self._jointIds = []
@@ -83,15 +113,58 @@ class A1Robot(gym.Env):
             if jointType == self._p.JOINT_PRISMATIC or jointType == self._p.JOINT_REVOLUTE:  # only add non-fixed joint
                 self._jointIds.append(j)
 
+        for footId in self._feetLinkId:
+            self._p.enableJointForceTorqueSensor(self._quadruped, footId)
+
         self._p.getCameraImage(480, 320)
         self._p.setRealTimeSimulation(0)
-        self._observation = self.getExtendedObservation()
+
+        self._update_states()
+        stable_motion = np.array([0.037199, 0.660252, -1.200187, -0.028954, 0.618814, -1.183148,
+                                  0.048225, 0.690008, -1.254787, -0.050525, 0.661355, -1.243304])
+
+        for _ in range(100):
+            self.step(stable_motion)
+
         print("<==========   Environment has been reset   ==========>")
         return np.array(self._observation)
 
     def _reward(self):
-        # todo here we need to implement our nice reward
-        return 1
+
+        # positional reward to encourage moving toward original
+        # r1 = -1 * (pow(self._basePos[0], 2)) * 20
+        r1 = -1 * min(self._baseVelocity[0], 0.35) * 20
+
+        # penalize the lateral movement and rotation
+        r2 = -1 * (pow(self._baseAngularVelocity[2], 2) + pow(self._baseVelocity[1], 2)) * 21
+
+        # penalize the work
+        r3 = -1 * (abs(np.array(self._jointsTorque) @ np.subtract(self._jointsTorque, self._jointsTorquePre).T)) * 0.002
+
+        # penalize the ground impact
+        r4 = -1 * (np.linalg.norm(np.subtract(self._feetForce, self._feetForcePre).flatten())) * 0.02
+
+        # penalize the jerky motions
+        r5 = -1 * (np.linalg.norm(np.subtract(self._jointsTorque, self._jointsTorquePre))) * 0.001
+
+        # penalize the actions
+        r6 = -1 * (np.linalg.norm(self._actions)) * 0.07
+
+        # penalize the joint speeds
+        r7 = -1 * (np.linalg.norm(self._jointsVelocity)) * 0.002
+
+        # penalize the orientations
+        r8 = -1 * (pow(self._baseOrn[0], 2) + pow(self._baseOrn[1], 2)) * 1.5
+
+        # penalize the z acceleration
+        r9 = -1 * (pow(self._baseVelocity[2], 2)) * 2.0
+
+        # penalize the foot slip
+        r10 = -1 * (np.linalg.norm(np.matmul(np.diag(self._contact_feet), self._feetVelocity)).flatten()) * 0.8
+
+        reward = r1 + r2 + r3 + r4 + r5 + r6 + r7 + r8 + r9 + r10
+
+        return reward
 
     def _performance(self):
         pass
@@ -108,17 +181,39 @@ class A1Robot(gym.Env):
         """
         The observation of the robot consists of: current state x_t_dim, previous_action at_1 (12);
         """
-        pos, orn = self._p.getBasePositionAndOrientation(self._quadruped)  # pose of the dog
-        pos_v, orn_v = self._p.getBaseVelocity(self._quadruped)  # velocity of the dog
+
+        self._observations = np.concatenate([self._jointsPos, self._jointsVelocity,
+                                             self._basePos, self._baseOrn[:2], self._contact_feet])
+
+        return self._observations
+
+    def _update_states(self):
+
+        self._jointsPosPre = self._jointsPos
+        self._jointsTorquePre = self._jointsTorque
+        self._feetForcePre = self._feetForce
+
+        pos, _ = self._p.getBasePositionAndOrientation(self._quadruped)  # pose of the dog in the world coordinate
+
+        # get the rotation angles from the body frame
+        _, _, _, qua_orn_local, _, _ = self._p.getLinkState(self._quadruped, 0)
+        orn = self._p.getEulerFromQuaternion(qua_orn_local)
+
+        # velocity of the dog in the world coordinate, the angular velocity should be in the body frame
+        pos_v, orn_v = self._p.getBaseVelocity(self._quadruped)
 
         # observations for joints
-        joint_states = self._p.getJointStates(self._quadruped, range(
-            12))  # for each join it contains (position, velocity, reaction_forces(6-dim), applied torque)
-        joints_states = np.array([np.concatenate(joint_states[i], axis=-1) for i in self._jointIds])
+        # for each join it contains (position, velocity, reaction_forces(6-dim), applied torque)
+        joint_states = self._p.getJointStates(self._quadruped, range(self._p.getNumJoints(self._quadruped)))
 
-        joints_position = joints_states[:, 0]  # 12
-        joints_velocity = joints_states[:, 1]  # 12
-        joints_torque = joints_states[:, -1]  # 12
+        joints_position = []
+        joints_velocity = []
+        joints_torque = []
+
+        for i in self._jointIds:
+            joints_position.append(joint_states[i][0])
+            joints_velocity.append(joint_states[i][1])
+            joints_torque.append(joint_states[i][-1])
 
         contact_points = self._p.getContactPoints(self._quadruped, self._plane)
         feet_contact_states = [0, ] * 4
@@ -126,75 +221,41 @@ class A1Robot(gym.Env):
         if len(contact_points) != 0:
             # the order of the link index is {5, 9, 13, 17}
             for contact in contact_points:
-                if contact[4] == 5:
-                    feet_contact_states[0] = 1
-                if contact[4] == 9:
-                    feet_contact_states[1] = 1
-                if contact[4] == 13:
-                    feet_contact_states[2] = 1
-                if contact[4] == 17:
-                    feet_contact_states[3] = 1
+                for k, linkId in enumerate(self._feetLinkId):
+                    if contact[4] == linkId:
+                        feet_contact_states[k] = 1
 
+        feetVelocity = []
+        feetForce = []
+
+        for footId in self._feetLinkId:
+            feetVelocity.append(self._p.getLinkState(self._quadruped, footId, 1)[6])
+            feetForce.append(self._p.getJointState(self._quadruped, footId)[2][:3])
+
+        self._feetForce = feetForce
+        self._feetVelocity = feetVelocity
         self._basePos = pos
         self._baseOrn = orn
         self._jointsPos = joints_position
         self._jointsVelocity = joints_velocity
         self._jointsTorque = joints_torque
-        self._contact_feet = contact_points
+        self._contact_feet = feet_contact_states
         self._baseVelocity = pos_v
         self._baseAngularVelocity = orn_v
+        self._observation = self.getExtendedObservation()
 
-        self._observations = np.concatenate([joints_position, joints_velocity, pos, orn[:2], feet_contact_states])
-
-        return self._observations
-
-    def step(self, action):
+    def step(self, action: np.ndarray, use_residual=False):
         """
         Here action at is the desired join position for the 12 robot joints.
         """
-        for j, a in enumerate(action):
+        self._actions = action * self.params.action_bound
+        for j, a in enumerate(self._actions):
             self._p.setJointMotorControl2(self._quadruped, self._jointIds[j],
                                           self._p.POSITION_CONTROL, a, force=self._maxForce)
 
         self._p.stepSimulation()
+        self._update_states()
         self._envStepCounter += 1
-
-        pos, orn = self._p.getBasePositionAndOrientation(self._quadruped)  # pose of the dog
-        pos_v, orn_v = self._p.getBaseVelocity(self._quadruped)  # velocity of the dog
-
-        # observations for joints
-        joint_states = self._p.getJointStates(self._quadruped, range(
-            12))  # for each join it contains (position, velocity, reaction_forces(6-dim), applied torque)
-        joints_states = np.array([np.concatenate(joint_states[i], axis=-1) for i in self._jointIds])
-
-        joints_position = joints_states[:, 0]  # 12
-        joints_velocity = joints_states[:, 1]  # 12
-        joints_torque = joints_states[:, -1]  # 12
-
-        contact_points = self._p.getContactPoints(self._quadruped, self._plane)
-        feet_contact_states = [0, ] * 4
-
-        if len(contact_points) != 0:
-            # the order of the link index is {5, 9, 13, 17}
-            for contact in contact_points:
-                if contact[4] == 5:
-                    feet_contact_states[0] = 1
-                if contact[4] == 9:
-                    feet_contact_states[1] = 1
-                if contact[4] == 13:
-                    feet_contact_states[2] = 1
-                if contact[4] == 17:
-                    feet_contact_states[3] = 1
-
-        self._basePos = pos
-        self._baseOrn = orn
-        self._jointsPos = joints_position
-        self._jointsVelocity = joints_velocity
-        self._jointsTorque = joints_torque
-        self._contact_feet = contact_points
-        self._baseVelocity = pos_v
-        self._baseAngularVelocity = orn_v
-
         self._observation = self.getExtendedObservation()
         reward = self._reward()
         done = self._termination()
@@ -206,7 +267,7 @@ class A1Robot(gym.Env):
         if mode != "rgb_array":
             return np.array([])
 
-        base_pos, orn = self._p.getBasePositionAndOrientation(self._quadruped)
+        base_pos, _ = self._p.getBasePositionAndOrientation(self._quadruped)
         view_matrix = self._p.computeViewMatrixFromYawPitchRoll(cameraTargetPosition=(0.3, 0, 0.48),
                                                                 distance=0.1,
                                                                 yaw=-90,
@@ -230,11 +291,12 @@ class A1Robot(gym.Env):
 
     def _termination(self):  # we need to implement the crash
         """
-        One episode would terminate when the height of the body will be below 0.28m
-        or the episode will exceed the maximum steps = 1000
+        One episode would terminate when the height of the body will be below 0.28m (z < 0.28)
+        or the rotation in the body
         """
         termination = False
-        if self._observations[2] < 0.28 or self._observations[3] > 0.4 or self._observations[4] > 0.2:
-            termination = False
+
+        if self._basePos[2] < 0.28 or self._baseOrn[0] > 0.4 or self._baseOrn[1] > 0.2:
+            termination = True
 
         return termination

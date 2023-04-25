@@ -50,10 +50,10 @@ while 1:
                                                farVal=100.0)
 
     (_, _, px, _, seg) = p.getCameraImage(width=640,
-                                        height=480,
-                                        viewMatrix=view_matrix,
-                                        projectionMatrix=proj_matrix,
-                                        renderer=p.ER_BULLET_HARDWARE_OPENGL)
+                                          height=480,
+                                          viewMatrix=view_matrix,
+                                          projectionMatrix=proj_matrix,
+                                          renderer=p.ER_BULLET_HARDWARE_OPENGL)
 
     rgb_array = np.array(px)
     rgb_array = rgb_array[:, :, :3]
@@ -61,8 +61,8 @@ while 1:
     im.save(f"data/images/rgb_{i}.png")
 
     seg_array = np.array(seg, dtype=np.uint8) * 255
-    seg_array[seg_array<=0] = 0
-    seg_array = np.stack((seg_array,)*3, axis=-1)
+    seg_array[seg_array <= 0] = 0
+    seg_array = np.stack((seg_array,) * 3, axis=-1)
     im_seg = Image.fromarray(seg_array)
     im_seg.save(f"data/labels/segmentations_{i}.png")
 

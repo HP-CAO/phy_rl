@@ -1,0 +1,38 @@
+{
+    "a1_params": {
+        "x_threshold": 0.5,
+        "if_render": false,
+        "control_frequency": 500,
+        "observe_reference_states": false,
+        "random_reset_eval": false,
+        "random_reset_train": false,
+        "action_bound": 1.5
+    },
+    "agent_params": {
+        "action_noise": "OU",
+        "action_noise_factor": 1,
+        "action_noise_half_decay_time": 1000000.0,
+        "soft_alpha": 0.005,
+        "learning_rate_actor": 0.0003,
+        "learning_rate_critic": 0.0003,
+        "batch_size": 128,
+        "add_target_action_noise": true,
+        "gamma_discount": 0.99,
+        "model_path": null,
+        "total_training_steps": 10000000.0,
+        "max_episode_steps": 1000,
+        "experience_prefill_size": 128,
+        "mode": "train",
+        "as_residual_policy": false,
+        "use_taylor_nn": false,
+        "taylor_editing": false
+    },
+    "logger_params": {
+        "evaluation_period": 20,
+        "model_name": "drl",
+        "visualize_eval": false,
+        "force_override": false,
+        "mode": "train"
+    }
+}
+

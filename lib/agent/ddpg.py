@@ -130,7 +130,7 @@ class DDPGAgent:
         observations_tensor = tf.expand_dims(observations, 0)
         action = tf.squeeze(self.actor(observations_tensor)).numpy()  # squeeze to kill batch_size
 
-        action_saturated = float(np.clip((action + action_noise), a_min=-1, a_max=1))
+        action_saturated = np.clip((action + action_noise), a_min=-1, a_max=1, dtype=float)
 
         self.exploration_steps += 1
         self.noise_factor_decay()
