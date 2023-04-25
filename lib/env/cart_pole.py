@@ -100,9 +100,10 @@ class Cartpole(gym.Env):
             force = self.voltage2force(voltage, x_dot)
 
         if use_residual:
-            F = [24.3889996, 38.80261887, 195.86059044, 33.26717081]
-            # force_res = 0.7400 * x + 3.6033 * x_dot + 35.3534 * theta + 6.9982 * theta_dot  # residual control commands
-            force_res = F[0] * x + F[1] * x_dot + F[2] * theta + F[3] * theta_dot  # residual control commands
+            # F = [24.3889996, 38.80261887, 195.86059044, 33.26717081]
+            # force_res = F[0] * x + F[1] * x_dot + F[2] * theta + F[3] * theta_dot  # residual control commands
+
+            force_res = 0.7400 * x + 3.6033 * x_dot + 35.3534 * theta + 6.9982 * theta_dot  # residual control commands
             force = force + force_res  # RL control commands + residual control commands
 
         force = np.clip(force, a_min=-1 * self.params.force_mag, a_max=1 * self.params.force_mag)
@@ -191,7 +192,8 @@ class Cartpole(gym.Env):
             elif sam_inx == 8:
                 self.states = [-ran_x, -ran_v, 0.10, ran_theta_v, failed]
         else:
-            ran_x = np.random.uniform(-1.5, 1.5)  # use previous setting and no sparse reset
+            # ran_x = np.random.uniform(-1.5, 1.5)  # use previous setting and no sparse reset
+            ran_x = np.random.uniform(-0.34, 0.34)  # use previous setting and no sparse reset
             # ran_v = np.random.uniform(-0.10, 0.10)
             ran_v = 0
             ran_theta = np.random.uniform(-1., 1.)  #
@@ -343,12 +345,13 @@ class Cartpole(gym.Env):
         #                      [0.2701, 2.2738, 5.1795, 1.0674],
         #                      [1.4192, 5.1795, 31.9812, 4.9798],
         #                      [0.2765, 1.0674, 4.9798, 1.0298]])  # Lyapunov P matrix
-
+        #
         # S_matrix = np.array([[1, 0.03333333, 0, 0],
         #                      [0.0247, 1.1204, 1.1249, 0.2339],
         #                      [0, 0, 1, 0.03333333],
         #                      [-0.0580, -0.2822, -1.8709, 0.4519]])
 
+        # new matrix
         P_matrix = np.array([[1.87923908, 0.67161525, 1.61895376, 0.30292564],
                              [0.67161525, 0.61586115, 1.01675245, 0.28030385],
                              [1.61895376, 1.01675245, 4.03342857, 0.50765612],
@@ -385,9 +388,6 @@ class Cartpole(gym.Env):
             lyapunov_reward = lyapunov_reward_current_aux - lyapunov_reward_next  # ours
 
         lyapunov_reward *= self.params.lyapunov_reward_factor
-
-        # tracking_error = self.get_tracking_error(P_matrix, states_current,
-        #                                          states_refer_current) * self.params.tracking_error_factor
 
         action_penalty = -1 * self.params.action_penalty * action * action
 
