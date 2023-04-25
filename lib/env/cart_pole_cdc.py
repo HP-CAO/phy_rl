@@ -91,6 +91,7 @@ class Cartpole(gym.Env):
         param: action: a scalar value (not numpy type) [-1,1]
         return: a list of states
         """
+
         x, x_dot, theta, theta_dot, _ = self.states
 
         if self.params.force_input:
@@ -100,12 +101,11 @@ class Cartpole(gym.Env):
             force = self.voltage2force(voltage, x_dot)
 
         if use_residual:
-            F = [24.3889996, 38.80261887, 195.86059044, 33.26717081]
-            # force_res = 0.7400 * x + 3.6033 * x_dot + 35.3534 * theta + 6.9982 * theta_dot  # residual control commands
-            force_res = F[0] * x + F[1] * x_dot + F[2] * theta + F[3] * theta_dot  # residual control commands
+            force_res = 0.7400 * x + 3.6033 * x_dot + 35.3534 * theta + 6.9982 * theta_dot  # residual control commands
             force = force + force_res  # RL control commands + residual control commands
 
         force = np.clip(force, a_min=-1 * self.params.force_mag, a_max=1 * self.params.force_mag)
+
         costheta = math.cos(theta)
         sintheta = math.sin(theta)
 
@@ -138,9 +138,9 @@ class Cartpole(gym.Env):
 
         if self.params.kinematics_integrator == 'euler':
             x = x + self.tau * x_dot
-            x_dot = x_dot + self.tau * (xacc + uu1)  # here we inject disturbances
+            x_dot = x_dot + self.tau * (xacc + uu1)
             theta = theta + self.tau * theta_dot
-            theta_dot = theta_dot + self.tau * (thetaacc + uu2)  # here we inject disturbances
+            theta_dot = theta_dot + self.tau * (thetaacc + uu2)
             failed = self.is_failed(x, theta_dot)
 
         else:  # semi-implicit euler
@@ -191,10 +191,10 @@ class Cartpole(gym.Env):
             elif sam_inx == 8:
                 self.states = [-ran_x, -ran_v, 0.10, ran_theta_v, failed]
         else:
-            ran_x = np.random.uniform(-1.5, 1.5)  # use previous setting and no sparse reset
+            ran_x = np.random.uniform(-0.25, 0.25)  # use previous setting and no sparse reset
             # ran_v = np.random.uniform(-0.10, 0.10)
             ran_v = 0
-            ran_theta = np.random.uniform(-1., 1.)  #
+            ran_theta = np.random.uniform(-0.15, 0.15)
             ran_theta_v = 0
             failed = False
             self.states = [ran_x, ran_v, ran_theta, ran_theta_v, failed]
@@ -339,25 +339,15 @@ class Cartpole(gym.Env):
 
     def reward_fcn(self, states_current, action, states_next, states_refer_current):
 
-        # P_matrix = np.array([[2.0120, 0.2701, 1.4192, 0.2765],
-        #                      [0.2701, 2.2738, 5.1795, 1.0674],
-        #                      [1.4192, 5.1795, 31.9812, 4.9798],
-        #                      [0.2765, 1.0674, 4.9798, 1.0298]])  # Lyapunov P matrix
+        P_matrix = np.array([[2.0120, 0.2701, 1.4192, 0.2765],
+                             [0.2701, 2.2738, 5.1795, 1.0674],
+                             [1.4192, 5.1795, 31.9812, 4.9798],
+                             [0.2765, 1.0674, 4.9798, 1.0298]])  # Lyapunov P matrix
 
-        # S_matrix = np.array([[1, 0.03333333, 0, 0],
-        #                      [0.0247, 1.1204, 1.1249, 0.2339],
-        #                      [0, 0, 1, 0.03333333],
-        #                      [-0.0580, -0.2822, -1.8709, 0.4519]])
-
-        P_matrix = np.array([[1.87923908, 0.67161525, 1.61895376, 0.30292564],
-                             [0.67161525, 0.61586115, 1.01675245, 0.28030385],
-                             [1.61895376, 1.01675245, 4.03342857, 0.50765612],
-                             [0.30292564, 0.28030385, 0.50765612, 0.13217918]])
-
-        S_matrix = np.array([[1., 0.03333333, 0., 0.],
-                             [0.81500427, 2.29666246, 6.48855862, 1.11168505],
-                             [0., 0., 1., 0.03333333],
-                             [-1.91016596, -3.03905215, -14.44193181, -1.60551143]])
+        S_matrix = np.array([[1, 0.03333333, 0, 0],
+                             [0.0247, 1.1204, 1.1249, 0.2339],
+                             [0, 0, 1, 0.03333333],
+                             [-0.0580, -0.2822, -1.8709, 0.4519]])
 
         observations, _ = states2observations(states_current)
         targets = self.params.targets  # [0, 0] stands for position and angle
@@ -390,8 +380,9 @@ class Cartpole(gym.Env):
         #                                          states_refer_current) * self.params.tracking_error_factor
 
         action_penalty = -1 * self.params.action_penalty * action * action
+        crash_penalty = -1 * self.params.crash_penalty * terminal
 
-        r = distance_reward + lyapunov_reward + action_penalty
+        r = distance_reward + lyapunov_reward + action_penalty + crash_penalty
 
         return r, distance_score
 
@@ -410,10 +401,9 @@ def observations2states(observations, failed):
 
 def get_unk_unk_dis():
     rng = np.random.default_rng(seed=1)
-    a = 11 * np.random.random(1)  # [0, 11]
-    b = 11 * np.random.random(1)  # [0, 11]
+    a = 2*np.random.random(1)
+    b = 2*np.random.random(1)
     uu1 = -rng.beta(a, b) + rng.beta(a, b)
     uu2 = -rng.beta(a, b) + rng.beta(a, b)
-    uu1 *= 2  # [-2, 2]
-    uu2 *= 2  # [-2, 2]
     return uu1[0], uu2[0]
+
