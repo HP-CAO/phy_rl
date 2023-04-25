@@ -192,8 +192,8 @@ class Cartpole(gym.Env):
             elif sam_inx == 8:
                 self.states = [-ran_x, -ran_v, 0.10, ran_theta_v, failed]
         else:
-            # ran_x = np.random.uniform(-1.5, 1.5)  # use previous setting and no sparse reset
-            ran_x = np.random.uniform(-0.34, 0.34)  # use previous setting and no sparse reset
+            ran_x = np.random.uniform(-1.5, 1.5)  # use previous setting and no sparse reset
+            # ran_x = np.random.uniform(-0.34, 0.34)  # use previous setting and no sparse reset
             # ran_v = np.random.uniform(-0.10, 0.10)
             ran_v = 0
             ran_theta = np.random.uniform(-1., 1.)  #
