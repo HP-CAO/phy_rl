@@ -100,6 +100,7 @@ class CartpoleDDPG:
         if mode == 'test':
             plot_trajectory(trajectory_tensor, reference_trajectory_tensor)
 
+        self.cartpole.close()
         return mean_reward, mean_distance_score, failed
 
     def train(self):
