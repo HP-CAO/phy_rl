@@ -100,12 +100,15 @@ class Cartpole(gym.Env):
             force = self.voltage2force(voltage, x_dot)
 
         if use_residual:
-            F = [24.3889996, 38.80261887, 195.86059044, 33.26717081]
+            F = np.array([8.25691599, 6.76016534, 40.12484514, 6.84742553])
+            # F = [24.3889996, 38.80261887, 195.86059044, 33.26717081]
             force_res = F[0] * x + F[1] * x_dot + F[2] * theta + F[3] * theta_dot  # residual control commands
 
             # force_res = 0.7400 * x + 3.6033 * x_dot + 35.3534 * theta + 6.9982 * theta_dot  # residual control commands
             force = force + force_res  # RL control commands + residual control commands
-        # force = np.clip(force, a_min=-1 * self.params.force_mag, a_max=1 * self.params.force_mag)
+
+        force = np.clip(force, a_min=-5 * self.params.force_mag, a_max=5 * self.params.force_mag)
+
         costheta = math.cos(theta)
         sintheta = math.sin(theta)
 
@@ -191,11 +194,9 @@ class Cartpole(gym.Env):
             elif sam_inx == 8:
                 self.states = [-ran_x, -ran_v, 0.10, ran_theta_v, failed]
         else:
-            ran_x = np.random.uniform(-0.8, 0.8)  # use previous setting and no sparse reset
-            # ran_x = np.random.uniform(-0.34, 0.34)  # use previous setting and no sparse reset
-            # ran_v = np.random.uniform(-0.10, 0.10)
+            ran_x = np.random.uniform(-0.85, 0.85)
             ran_v = 0
-            ran_theta = np.random.uniform(-0.7, 0.7)  #
+            ran_theta = np.random.uniform(-0.6, 0.6)
             ran_theta_v = 0
             failed = False
             self.states = [ran_x, ran_v, ran_theta, ran_theta_v, failed]
@@ -340,26 +341,15 @@ class Cartpole(gym.Env):
 
     def reward_fcn(self, states_current, action, states_next, states_refer_current):
 
-        # P_matrix = np.array([[2.0120, 0.2701, 1.4192, 0.2765],
-        #                      [0.2701, 2.2738, 5.1795, 1.0674],
-        #                      [1.4192, 5.1795, 31.9812, 4.9798],
-        #                      [0.2765, 1.0674, 4.9798, 1.0298]])  # Lyapunov P matrix
-        #
-        # S_matrix = np.array([[1, 0.03333333, 0, 0],
-        #                      [0.0247, 1.1204, 1.1249, 0.2339],
-        #                      [0, 0, 1, 0.03333333],
-        #                      [-0.0580, -0.2822, -1.8709, 0.4519]])
+        P_matrix = np.array([[4.6074554, 1.49740096, 5.80266046, 0.99189224],
+                             [1.49740096, 0.81703147, 2.61779592, 0.51179642],
+                             [5.80266046, 2.61779592, 11.29182733, 1.87117709],
+                             [0.99189224, 0.51179642, 1.87117709, 0.37041435]])  # new Lyapunov P matrix
 
-        # new matrix
-        P_matrix = np.array([[1.87923908, 0.67161525, 1.61895376, 0.30292564],
-                             [0.67161525, 0.61586115, 1.01675245, 0.28030385],
-                             [1.61895376, 1.01675245, 4.03342857, 0.50765612],
-                             [0.30292564, 0.28030385, 0.50765612, 0.13217918]])
-
-        S_matrix = np.array([[1., 0.03333333, 0., 0.],
-                             [0.81500427, 2.29666246, 6.48855862, 1.11168505],
-                             [0., 0., 1., 0.03333333],
-                             [-1.91016596, -3.03905215, -14.44193181, -1.60551143]])
+        S_matrix = np.array([[1, 0.03333333, 0, 0, ],
+                             [0.27592037, 1.22590363, 1.2843559, 0.2288196],
+                             [0, 0, 1, 0.03333333],
+                             [-0.64668827, -0.52946156, -2.24458365, 0.46370415]])  # new system matrix
 
         observations, _ = states2observations(states_current)
         targets = self.params.targets  # [0, 0] stands for position and angle

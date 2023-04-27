@@ -164,7 +164,9 @@ class A1Robot(gym.Env):
 
         reward = r1 + r2 + r3 + r4 + r5 + r6 + r7 + r8 + r9 + r10
 
-        return reward
+        reward_list = [r1, r2, r3, r4, r5, r6, r7, r8, r9, r10]
+
+        return reward, reward_list
 
     def _performance(self):
         pass
@@ -257,10 +259,10 @@ class A1Robot(gym.Env):
         self._update_states()
         self._envStepCounter += 1
         self._observation = self.getExtendedObservation()
-        reward = self._reward()
+        reward, reward_list = self._reward()
         done = self._termination()
 
-        return np.array(self._observation), reward, done, {}
+        return np.array(self._observation), reward, done, {}, reward_list
 
     def render(self, mode='human', close=False):
 

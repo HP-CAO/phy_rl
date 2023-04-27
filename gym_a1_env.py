@@ -18,12 +18,14 @@ with open("lib/env/a1/mocap.txt", "r") as filestream:
 stable_motion = starting_motion
 
 i = 1
+
 while 1:
     i += 1
     joints = np.array(stable_motion, dtype=float)
-    observation, reward, done, _ = robot.step(joints)
-    print(observation.shape)
-    print(reward)
+    observation, reward, done, _, reward_list = robot.step(joints)
+
+    # print(reward_list)
+    # print(reward)
     time.sleep(1. / 500.)
 
     # image = robot.render("rgb_array")

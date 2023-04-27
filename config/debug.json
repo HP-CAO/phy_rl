@@ -1,6 +1,6 @@
 {
     "cartpole_params": {
-        "x_threshold": 0.34,
+        "x_threshold": 1.0,
         "theta_dot_threshold": 15,
         "kinematics_integrator": "euler",
         "gravity": 9.8,
@@ -10,15 +10,15 @@
         "voltage_mag": 5.0,
         "length": 0.64,
         "theta_random_std": 0.8,
-        "friction_cart": 12,
+        "friction_cart": 5,
         "friction_pole": 0.0011,
         "simulation_frequency": 30,
         "with_friction": true,
         "force_input": true,
         "ini_states": [
-            0.1,
+            0.5,
             0.0,
-            0.15,
+            0.3,
             0.0,
             false
         ],
@@ -33,11 +33,11 @@
         "crash_penalty": 0,
         "observe_reference_states": false,
         "random_reset_train": true,
-        "random_reset_eval": true,
+        "random_reset_eval": false,
         "update_reference_model": true,
         "sparse_reset": false,
         "use_ubc_lya_reward": false,
-        "add_uu_dis": true
+        "add_uu_dis": false
     },
     "agent_params": {
         "action_noise": "no",
@@ -53,14 +53,14 @@
         "total_training_steps": 1e6,
         "max_episode_steps": 1000,
         "experience_prefill_size": 128,
-        "as_residual_policy": true,
+        "as_residual_policy": false,
         "use_taylor_nn": false,
         "taylor_editing": false
     },
     "logger_params": {
         "evaluation_period": 1,
         "model_name": "ddpg_res",
-        "visualize_eval": false,
+        "visualize_eval": true,
         "force_override": false,
         "mode": "train"
     }
