@@ -107,7 +107,7 @@ class Cartpole(gym.Env):
             # force_res = 0.7400 * x + 3.6033 * x_dot + 35.3534 * theta + 6.9982 * theta_dot  # residual control commands
             force = force + force_res  # RL control commands + residual control commands
 
-        force = np.clip(force, a_min=-5 * self.params.force_mag, a_max=5 * self.params.force_mag)
+        # force = np.clip(force, a_min=-5 * self.params.force_mag, a_max=5 * self.params.force_mag)
 
         costheta = math.cos(theta)
         sintheta = math.sin(theta)
@@ -195,9 +195,9 @@ class Cartpole(gym.Env):
                 self.states = [-ran_x, -ran_v, 0.10, ran_theta_v, failed]
         else:
             ran_x = np.random.uniform(-0.85, 0.85)
-            ran_v = 0
+            ran_v = np.random.uniform(-0.4, 0.4)
             ran_theta = np.random.uniform(-0.6, 0.6)
-            ran_theta_v = 0
+            ran_theta_v = np.random.uniform(-0.4, 0.4)
             failed = False
             self.states = [ran_x, ran_v, ran_theta, ran_theta_v, failed]
         self.states_refer = copy.deepcopy(self.states)

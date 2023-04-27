@@ -29,7 +29,7 @@
         "tracking_error_factor": 0,
         "lyapunov_reward_factor": 1,
         "high_performance_reward_factor": 0,
-        "action_penalty": 1.0,
+        "action_penalty": 0.01,
         "crash_penalty": 0,
         "observe_reference_states": false,
         "random_reset_train": true,
