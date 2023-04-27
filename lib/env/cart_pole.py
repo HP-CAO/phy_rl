@@ -100,13 +100,12 @@ class Cartpole(gym.Env):
             force = self.voltage2force(voltage, x_dot)
 
         if use_residual:
-            # F = [24.3889996, 38.80261887, 195.86059044, 33.26717081]
-            # force_res = F[0] * x + F[1] * x_dot + F[2] * theta + F[3] * theta_dot  # residual control commands
+            F = [24.3889996, 38.80261887, 195.86059044, 33.26717081]
+            force_res = F[0] * x + F[1] * x_dot + F[2] * theta + F[3] * theta_dot  # residual control commands
 
-            force_res = 0.7400 * x + 3.6033 * x_dot + 35.3534 * theta + 6.9982 * theta_dot  # residual control commands
+            # force_res = 0.7400 * x + 3.6033 * x_dot + 35.3534 * theta + 6.9982 * theta_dot  # residual control commands
             force = force + force_res  # RL control commands + residual control commands
-
-        force = np.clip(force, a_min=-1 * self.params.force_mag, a_max=1 * self.params.force_mag)
+        # force = np.clip(force, a_min=-1 * self.params.force_mag, a_max=1 * self.params.force_mag)
         costheta = math.cos(theta)
         sintheta = math.sin(theta)
 
@@ -192,11 +191,11 @@ class Cartpole(gym.Env):
             elif sam_inx == 8:
                 self.states = [-ran_x, -ran_v, 0.10, ran_theta_v, failed]
         else:
-            ran_x = np.random.uniform(-1.5, 1.5)  # use previous setting and no sparse reset
+            ran_x = np.random.uniform(-0.8, 0.8)  # use previous setting and no sparse reset
             # ran_x = np.random.uniform(-0.34, 0.34)  # use previous setting and no sparse reset
             # ran_v = np.random.uniform(-0.10, 0.10)
             ran_v = 0
-            ran_theta = np.random.uniform(-1., 1.)  #
+            ran_theta = np.random.uniform(-0.7, 0.7)  #
             ran_theta_v = 0
             failed = False
             self.states = [ran_x, ran_v, ran_theta, ran_theta_v, failed]
