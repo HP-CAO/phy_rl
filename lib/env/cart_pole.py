@@ -41,6 +41,9 @@ class CartpoleParams:
         self.use_ubc_lya_reward = True
         self.add_uu_dis = False
 
+        self.uu_a = None
+        self.uu_b = None
+
 
 class Cartpole(gym.Env):
     metadata = {
@@ -137,7 +140,7 @@ class Cartpole(gym.Env):
         uu2 = 0
 
         if self.params.add_uu_dis:
-            uu1, uu2 = get_unk_unk_dis()
+            uu1, uu2 = get_unk_unk_dis(self.params.uu_a, self.params.uu_b)
 
         if self.params.kinematics_integrator == 'euler':
             x = x + self.tau * x_dot
@@ -397,12 +400,19 @@ def observations2states(observations, failed):
     return states
 
 
-def get_unk_unk_dis():
+def get_unk_unk_dis(a=None, b=None):
     rng = np.random.default_rng(seed=1)
-    a = 11 * np.random.random(1)  # [0, 11]
-    b = 11 * np.random.random(1)  # [0, 11]
+
+    if a is None:
+        a = 11 * np.random.random(1)[0]  # [0, 11]
+
+    if b is None:
+        b = 11 * np.random.random(1)[0]  # [0, 11]
+
     uu1 = -rng.beta(a, b) + rng.beta(a, b)
     uu2 = -rng.beta(a, b) + rng.beta(a, b)
+
     uu1 *= 2  # [-2, 2]
     uu2 *= 2  # [-2, 2]
-    return uu1[0], uu2[0]
+
+    return uu1, uu2
