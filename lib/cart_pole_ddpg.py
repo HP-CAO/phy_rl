@@ -101,6 +101,7 @@ class CartpoleDDPG:
             plot_trajectory(trajectory_tensor, reference_trajectory_tensor)
 
         self.cartpole.close()
+        # np.save("nips_model_based", np.array(trajectory_tensor))
         return mean_reward, mean_distance_score, failed
 
     def train(self):

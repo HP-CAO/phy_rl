@@ -101,10 +101,7 @@ class Cartpole(gym.Env):
 
         if use_residual:
             F = np.array([8.25691599, 6.76016534, 40.12484514, 6.84742553])
-            # F = [24.3889996, 38.80261887, 195.86059044, 33.26717081]
             force_res = F[0] * x + F[1] * x_dot + F[2] * theta + F[3] * theta_dot  # residual control commands
-
-            # force_res = 0.7400 * x + 3.6033 * x_dot + 35.3534 * theta + 6.9982 * theta_dot  # residual control commands
             force = force + force_res  # RL control commands + residual control commands
 
         # force = np.clip(force, a_min=-5 * self.params.force_mag, a_max=5 * self.params.force_mag)

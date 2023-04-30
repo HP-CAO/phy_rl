@@ -39,14 +39,13 @@ class DDPGAgent:
 
         self.exploration_steps = 0
 
-        # if model_path is not None:
-        #     if self.actor is None:
-        #         self.create_model(shape_observations, shape_action)
-        #     self.load_weights(model_path, mode=mode)
-        # else:
-        #     self.create_model(shape_observations, shape_action)
-        #     self.hard_update()
-        self.create_model(shape_observations, shape_action)
+        if model_path is not None:
+            if self.actor is None:
+                self.create_model(shape_observations, shape_action)
+            self.load_weights(model_path, mode=mode)
+        else:
+            self.create_model(shape_observations, shape_action)
+            self.hard_update()
 
         self.add_action_noise = True
         if self.params.action_noise == 'no':
