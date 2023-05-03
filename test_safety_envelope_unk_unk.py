@@ -8,6 +8,8 @@ from matplotlib.markers import MarkerStyle
 import copy
 from lib.agent.ddpg import DDPGAgent, DDPGParams
 from lib.env.cart_pole import CartpoleParams, Cartpole, states2observations
+import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 x_t_list = np.linspace(-0.9, 0.9, 90)
 theta_t_list = np.linspace(-0.8, 0.8, 80)
@@ -63,8 +65,9 @@ axs[1].set_ylim(-1, 1)
 # Loading model
 params = read_config("./config/eval.json")
 model_path = "test_models/nips_unk_our_with_res_1_best"
-model_path_no_unk = "test_models/batch_2_nips_no_unk_our_with_res_1_best"
-# model_path_no_unk = "test_models/batch_2_nips_unk_11_our_with_res_1_best"
+# model_path_no_unk = "test_models/batch_2_nips_no_unk_our_with_res_1_best"
+model_path_no_unk = "test_models/batch_2_nips_unk_11_our_with_res_1_best" # uniform distribution
+
 
 agent_our = DDPGAgent(params.agent_params,
                       shape_observations=5,
@@ -147,4 +150,4 @@ axs[1].grid()
 
 plt.show()
 # fig.savefig(f'plot/NIP/safety_env.pdf', format='pdf', bbox_inches='tight')
-fig.savefig(f'plot/NIP/safety_env_unk.png', dpi=300, bbox_inches='tight')
+fig.savefig(f'plot/NIP/safety_env_uniform_unk.png', dpi=300, bbox_inches='tight')

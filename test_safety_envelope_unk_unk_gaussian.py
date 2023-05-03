@@ -9,11 +9,12 @@ import copy
 from lib.agent.ddpg import DDPGAgent, DDPGParams
 from lib.env.cart_pole import CartpoleParams, Cartpole, states2observations
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 x_t_list = np.linspace(-0.9, 0.9, 90)
 theta_t_list = np.linspace(-0.8, 0.8, 80)
+
 trajectory_length = 100
 P_matrix = np.array([[4.6074554, 1.49740096, 5.80266046, 0.99189224],
                      [1.49740096, 0.81703147, 2.61779592, 0.51179642],
@@ -43,20 +44,31 @@ tx = np.matmul(tQ, ty)
 tx1 = np.array(tx[0]).flatten()
 tx2 = np.array(tx[1]).flatten()
 
-fig1 = plt.figure()
+# fig1 = plt.figure()
+fig, axs = plt.subplots(2)
 # plt.figure(num = 3,figsize = (10,5))
-plt.plot(tx1, tx2, linewidth=2, color='black')
-plt.vlines(x=-0.9, ymin=-0.85, ymax=0.85, color='black', linewidth=2.5)
-plt.vlines(x=0.9, ymin=-0.85, ymax=0.85, color='black', linewidth=2.5)
-plt.hlines(y=-0.8, xmin=-0.95, xmax=0.95, color='black', linewidth=2.5)
-plt.hlines(y=0.8, xmin=-0.95, xmax=0.95, color='black', linewidth=2.5)
-plt.xlim(-1.2, 1.2)
-plt.ylim(-1, 1)
+axs[0].plot(tx1, tx2, linewidth=2, color='black')
+axs[0].vlines(x=-0.9, ymin=-0.85, ymax=0.85, color='black', linewidth=2.5)
+axs[0].vlines(x=0.9, ymin=-0.85, ymax=0.85, color='black', linewidth=2.5)
+axs[0].hlines(y=-0.8, xmin=-0.95, xmax=0.95, color='black', linewidth=2.5)
+axs[0].hlines(y=0.8, xmin=-0.95, xmax=0.95, color='black', linewidth=2.5)
+axs[0].set_xlim(-1.2, 1.2)
+axs[0].set_ylim(-1, 1)
+
+axs[1].plot(tx1, tx2, linewidth=2, color='black')
+axs[1].vlines(x=-0.9, ymin=-0.85, ymax=0.85, color='black', linewidth=2.5)
+axs[1].vlines(x=0.9, ymin=-0.85, ymax=0.85, color='black', linewidth=2.5)
+axs[1].hlines(y=-0.8, xmin=-0.95, xmax=0.95, color='black', linewidth=2.5)
+axs[1].hlines(y=0.8, xmin=-0.95, xmax=0.95, color='black', linewidth=2.5)
+axs[1].set_xlim(-1.2, 1.2)
+axs[1].set_ylim(-1, 1)
 
 # Loading model
 params = read_config("./config/eval.json")
 model_path = "test_models/nips_unk_our_with_res_1_best"
-model_path_ubc = "test_models/nips_unk_ubc_no_res_1_best"
+# model_path_no_unk = "test_models/batch_2_nips_no_unk_our_with_res_1_best"
+model_path_no_unk = "test_models/batch_2_nips_unk_11_our_with_res_1_best"
+
 
 agent_our = DDPGAgent(params.agent_params,
                       shape_observations=5,
@@ -64,11 +76,11 @@ agent_our = DDPGAgent(params.agent_params,
                       model_path=model_path,
                       mode="test")
 
-agent_ubc = DDPGAgent(params.agent_params,
-                      shape_observations=5,
-                      shape_action=1,
-                      model_path=model_path_ubc,
-                      mode="test")
+agent_no_unk = DDPGAgent(params.agent_params,
+                         shape_observations=5,
+                         shape_action=1,
+                         model_path=model_path_no_unk,
+                         mode="test")
 
 # Set interaction env
 
@@ -114,26 +126,29 @@ def interact_loop(x_t, theta_t, ai_agent):
 # interaction loop
 for x_t in tqdm(x_t_list):
     for theta_t in theta_t_list:
-        tx_array_ubc, position_array_ubc, angle_array_ubc = interact_loop(x_t, theta_t, ai_agent=agent_ubc)
+        tx_array_ubc, position_array_ubc, angle_array_ubc = interact_loop(x_t, theta_t, ai_agent=agent_no_unk)
 
         if len(tx_array_ubc[tx_array_ubc > 1]) == 0:
-            p1 = plt.scatter(x_t, theta_t, c='red', s=40, marker='o', edgecolors='r')
+            p1 = axs[0].scatter(x_t, theta_t, c='blue', s=8)
         elif len(position_array_ubc[position_array_ubc > 0.9]) == 0 \
                 and len(angle_array_ubc[angle_array_ubc > 0.8]) == 0:
-            p2 = plt.scatter(x_t, theta_t, c='red', s=40, edgecolors='r')
-            p2.set_facecolor('none')
+            p2 = axs[0].scatter(x_t, theta_t, c='green', s=8)
 
         tx_array, position_array, angle_array = interact_loop(x_t, theta_t, ai_agent=agent_our)
 
         if len(tx_array[tx_array > 1]) == 0:
-            p3 = plt.scatter(x_t, theta_t, c='blue', s=8)
+            p3 = axs[1].scatter(x_t, theta_t, c='blue', s=8)
         elif len(position_array[position_array > 0.9]) == 0 \
                 and len(angle_array[angle_array > 0.8]) == 0:
-            p4 = plt.scatter(x_t, theta_t, c='green', s=8)
-
+            p4 = axs[1].scatter(x_t, theta_t, c='green', s=8)
 
 plt.xlabel(r'$x$', fontsize=16)
-plt.ylabel(r"${\Theta}$", fontsize=16)
-plt.grid()
+
+axs[0].set_ylabel(r"${\Theta}$", fontsize=16)
+axs[1].set_ylabel(r"${\Theta}$", fontsize=16)
+axs[0].grid()
+axs[1].grid()
+
 plt.show()
-fig1.savefig(f'plot/NIP/safety_env.pdf', format='pdf', bbox_inches='tight')
+# fig.savefig(f'plot/NIP/safety_env.pdf', format='pdf', bbox_inches='tight')
+fig.savefig(f'plot/NIP/safety_env_gaussian_unk.png', dpi=300, bbox_inches='tight')

@@ -397,23 +397,6 @@ def observations2states(observations, failed):
     return states
 
 
-# def get_unk_unk_dis(a=None, b=None):
-#     rng = np.random.default_rng(seed=1)
-#
-#     if a is None:
-#         a = 11 * np.random.random(1)[0]  # [0, 11]
-#
-#     if b is None:
-#         b = 11 * np.random.random(1)[0]  # [0, 11]
-#
-#     uu1 = -rng.beta(a, b) + rng.beta(a, b)
-#     uu2 = -rng.beta(a, b) + rng.beta(a, b)
-#
-#     uu1 *= 2.0  # [-4, 4]
-#     uu2 *= 2.0  # [-2, 2]
-#
-#     return uu1, uu2
-
 def get_unk_unk_dis(a=None, b=None):
     rng = np.random.default_rng(seed=1)
 
@@ -423,10 +406,30 @@ def get_unk_unk_dis(a=None, b=None):
     if b is None:
         b = 11 * np.random.random(1)[0]  # [0, 11]
 
-    # uu1 = -rng.beta(a, b) + rng.beta(a, b)
-    # uu2 = -rng.beta(a, b) + rng.beta(a, b)
+    uu1 = -rng.beta(a, b) + rng.beta(a, b)
+    uu2 = -rng.beta(a, b) + rng.beta(a, b)
 
-    uu1 = 2 * rng.beta(a, b) + 0.5
-    uu2 = 2 * rng.beta(a, b) + 0.5
+    uu1 *= 2.0  # [-2, 2]
+    uu2 *= 2.0  # [-2, 2]
 
     return uu1, uu2
+
+
+# the below is for test
+
+# def get_unk_unk_dis(a=None, b=None):
+#     rng = np.random.default_rng(seed=1)
+#
+#     if a is None:
+#         a = 11 * np.random.random(1)[0]  # [0, 11]
+#
+#     if b is None:
+#         b = 11 * np.random.random(1)[0]  # [0, 11]
+#
+#     # uu1 = -rng.beta(a, b) + rng.beta(a, b)
+#     # uu2 = -rng.beta(a, b) + rng.beta(a, b)
+#
+#     uu1 = 2 * rng.beta(a, b) + 0.5
+#     uu2 = 2 * rng.beta(a, b) + 0.5
+#
+#     return uu1, uu2
