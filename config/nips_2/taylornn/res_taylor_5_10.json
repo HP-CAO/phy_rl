@@ -57,7 +57,7 @@
         "experience_prefill_size": 128,
         "as_residual_policy": true,
         "use_taylor_nn": true,
-        "taylor_editing": true
+        "taylor_editing": false
     },
     "logger_params": {
         "evaluation_period": 20,
@@ -65,6 +65,23 @@
         "visualize_eval": false,
         "force_override": false,
         "mode": "train"
+    },
+    "taylor_params": {
+        "dense_dims": [
+            5,
+            10
+        ],
+        "aug_order": [
+            1,
+            1,
+            0
+        ],
+        "initializer_w": "tn",
+        "initializer_b": "uniform",
+        "activations": [
+            "relu",
+            "relu"
+        ]
     }
 }
 

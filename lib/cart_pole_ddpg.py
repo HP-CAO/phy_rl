@@ -11,6 +11,7 @@ class Params:
         self.cartpole_params = CartpoleParams()
         self.agent_params = DDPGParams()
         self.logger_params = LoggerParams()
+        self.taylor_params = TaylorParams()
 
 
 class CartpoleDDPG:

@@ -9,8 +9,7 @@ import numpy as np
 class TaylorParams:
     def __init__(self):
         self.dense_dims = [20, 6]  # dim for hidden layers, not including input dim and output dim
-        # self.aug_order = [1, 1, 0]  # augmentation order for all hidden layers. 2 will lead to 3rd order
-        self.aug_order = [0, 0, 0]  # augmentation order for all hidden layers. 2 will lead to 3rd order
+        self.aug_order = [1, 1, 0]  # augmentation order for all hidden layers. 2 will lead to 3rd order
         self.initializer_w = 'tn'
         self.initializer_b = 'uniform'
         self.activations = ['relu', 'relu']  # activations for hidden layers, not including output

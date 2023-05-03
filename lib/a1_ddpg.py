@@ -1,4 +1,4 @@
-from lib.agent.ddpg import DDPGParams, DDPGAgent
+from lib.agent.ddpg import DDPGParams, DDPGAgent, TaylorParams
 from lib.env.a1 import A1Robot, A1Params
 from lib.logger.logger import LoggerParams, Logger
 from lib.utils import ReplayMemory
