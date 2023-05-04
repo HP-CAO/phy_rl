@@ -28,7 +28,8 @@ class DDPGParams:
 
 
 class DDPGAgent:
-    def __init__(self, params: DDPGParams, shape_observations, shape_action, model_path=None, mode='train'):
+    def __init__(self, params: DDPGParams, taylor_params: TaylorParams, shape_observations, shape_action,
+                 model_path=None, mode='train'):
         self.params = params
         self.actor = None
         self.actor_target = None
@@ -36,6 +37,7 @@ class DDPGAgent:
         self.critic_target = None
         self.optimizer_actor = None
         self.optimizer_critic = None
+        self.taylor_params = taylor_params
 
         self.exploration_steps = 0
 
@@ -76,12 +78,11 @@ class DDPGAgent:
     def create_model(self, shape_observations, shape_action):
 
         if self.params.use_taylor_nn:
-            taylor_params = TaylorParams()
-            self.actor = TaylorModel(taylor_params, shape_observations, shape_action, output_activation='tanh')
-            self.actor_target = TaylorModel(taylor_params, shape_observations, shape_action, output_activation='tanh')
-            self.critic = TaylorModel(taylor_params, shape_observations + shape_action, 1, output_activation=None,
+            self.actor = TaylorModel(self.taylor_params, shape_observations, shape_action, output_activation='tanh')
+            self.actor_target = TaylorModel(self.taylor_params, shape_observations, shape_action, output_activation='tanh')
+            self.critic = TaylorModel(self.taylor_params, shape_observations + shape_action, 1, output_activation=None,
                                       taylor_editing=self.params.taylor_editing)
-            self.critic_target = TaylorModel(taylor_params, shape_observations + shape_action, 1,
+            self.critic_target = TaylorModel(self.taylor_params, shape_observations + shape_action, 1,
                                              output_activation=None, taylor_editing=self.params.taylor_editing)
         else:
             self.actor = build_mlp_model(shape_observations, shape_action, name="actor", output_activation='tanh')

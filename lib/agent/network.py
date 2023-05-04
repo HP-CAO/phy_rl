@@ -23,7 +23,6 @@ class TaylorModel(Model):
         activation_list = params.activations
         activation_list.append(output_activation)
         weights_shape = exp_length(dim_list, aug_order).astype(np.int64)  # w = [dim_neurons, input_dim]
-        print(weights_shape)
         num_layers = len(weights_shape)
 
         self.layer_list = []
@@ -291,7 +290,7 @@ def get_knowledge_matrix():
     params = {}
 
     CPhy_lay1_A = np.zeros((out1, a_input_dim), dtype=np.float32)
-    CPhy_lay1_B = np.ones((out1, a_input_dim), dtype=np.float32) # 10 x 27   10* 27 _ 27 *1
+    CPhy_lay1_B = np.ones((out1, a_input_dim), dtype=np.float32)  # 10 x 27   10* 27 _ 27 *1
     CphyBias_lay1_A = np.zeros((out1, 1), dtype=np.float32)
     CphyBias_lay1_B = np.ones((out1, 1), dtype=np.float32)
 
@@ -304,7 +303,7 @@ def get_knowledge_matrix():
         CPhy_lay1_B[i][5] = 0
 
     ######second layer######
-    out1_a = 20
+    out1_a = 20  # todo
 
     CPhy_lay2_A = np.zeros((out2, out1_a), dtype=np.float32)
     CPhy_lay2_B = np.ones((out2, out1_a), dtype=np.float32)
@@ -330,7 +329,6 @@ def get_knowledge_matrix():
                                params['phybiasesA'][k], params['phybiasesB'][k]])
 
     return editing_matrix
-
 
 # def get_knowledge_matrix_new():
 #     #####Extract Knowledge Matrix###############################################################################################

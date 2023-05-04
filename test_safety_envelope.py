@@ -80,7 +80,7 @@ tx_list = []
 
 def interact_loop(x_t, theta_t, ai_agent):
     init_states = [x_t, 0., theta_t, 0, False]
-    # init_states = [0, 0., 0, 0, False]
+    # init_states = [0, 0., 0, 0, False]k
     env.reset(init_states)
     # trajectory
     trajectory = []
