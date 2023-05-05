@@ -10,6 +10,7 @@ class Params:
         self.a1_params = A1Params()
         self.agent_params = DDPGParams()
         self.logger_params = LoggerParams()
+        self.taylor_params = TaylorParams()
 
 
 class A1DDPG:
@@ -26,6 +27,7 @@ class A1DDPG:
             self.shape_observations += self.robot.states_observations_refer_dim
 
         self.agent = DDPGAgent(self.params.agent_params,
+                               self.params.taylor_params,
                                shape_observations=self.shape_observations,
                                shape_action=self.shape_action,
                                model_path=self.params.agent_params.model_path,
