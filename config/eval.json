@@ -65,6 +65,23 @@
         "visualize_eval": true,
         "force_override": false,
         "mode": "train"
+    },
+    "taylor_params": {
+        "dense_dims": [
+            12,
+            12
+        ],
+        "aug_order": [
+            0,
+            0,
+            0
+        ],
+        "initializer_w": "tn",
+        "initializer_b": "uniform",
+        "activations": [
+            "relu",
+            "relu"
+        ]
     }
 }
 
