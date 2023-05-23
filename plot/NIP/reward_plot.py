@@ -84,9 +84,9 @@ def plot_group_training(sub_source_folder, save_name, y_label):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--folder', default="plot/NIP/nips_data_source/Reward Ubc", help='Activate usage of GPU')
+    parser.add_argument('--folder', default="plot/NIP/nips_data_source/reward taylor_3_base", help='Activate usage of GPU')
     parser.add_argument('--y_label', default="Reward", help='Enable to write default config only')
-    parser.add_argument('--save_name', default="reward_ubc", help='Enable to write default config only')
+    parser.add_argument('--save_name', default="reward taylor_3_base", help='Enable to write default config only')
 
     args = parser.parse_args()
     source_folder = args.folder
