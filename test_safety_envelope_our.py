@@ -12,7 +12,7 @@ import os
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
-x_t_list = np.linspace(-0.9, 0.9, 90)
+x_t_list = np.linspace(-0.9, 0.9, 80)
 theta_t_list = np.linspace(-0.8, 0.8, 80)
 trajectory_length = 150
 P_matrix = np.array([[4.6074554, 1.49740096, 5.80266046, 0.99189224],
@@ -57,7 +57,7 @@ plt.ylim(-1, 1)
 params = read_config("./config/eval.json")
 model_path = "test_models/nips_unk_our_with_res_1_best"
 # model_path_ubc = "test_models/nips_unk_ubc_no_res_1_best"
-model_path_ubc = "test_models/nips_unk_ubc_no_res_2M_2_best"
+model_path_ubc = "test_models/nips_unk_ubc_no_res_1.5M_1_best"
 
 agent_our = DDPGAgent(params.agent_params,
                       params.taylor_params,
@@ -138,5 +138,5 @@ plt.xlabel(r'$x$', fontsize=16)
 plt.ylabel(r"${\Theta}$", fontsize=16)
 plt.grid()
 plt.show()
-# fig1.savefig(f'plot/NIP/safety_env.pdf', format='pdf', bbox_inches='tight')
-fig1.savefig(f'plot/NIP/safety_env_our_vs_ubc_2M.png', dpi=300, bbox_inches='tight')
+fig1.savefig(f'plot/NIP/safety_env.pdf', format='pdf', bbox_inches='tight')
+# fig1.savefig(f'plot/NIP/safety_env_our_vs_ubc_1.5.png', dpi=300, bbox_inches='tight')
