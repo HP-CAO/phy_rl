@@ -89,6 +89,9 @@ if __name__ == '__main__':
     parser.add_argument('--folder', default="plot/NIP/nips_data_source/reward_our_ubc_1.5", help='Activate usage of GPU')
     parser.add_argument('--y_label', default="Reward", help='Enable to write default config only')
     parser.add_argument('--save_name', default="reward_nip", help='Enable to write default config only')
+    parser.add_argument('--folder', default="plot/NIP/nips_data_source/reward taylor_3_base", help='Activate usage of GPU')
+    parser.add_argument('--y_label', default="Reward", help='Enable to write default config only')
+    parser.add_argument('--save_name', default="reward taylor_3_base", help='Enable to write default config only')
 
     args = parser.parse_args()
     source_folder = args.folder
