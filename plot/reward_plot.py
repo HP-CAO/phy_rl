@@ -83,7 +83,7 @@ def plot_group_training(sub_source_folder, save_name, y_label):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--folder', default="plot/data_source/reward plot", help='Activate usage of GPU')
+    parser.add_argument('--folder', default="plot/data_source/reward_our_ubc_1.5", help='Activate usage of GPU')
     parser.add_argument('--y_label', default="Cost function", help='Enable to write default config only')
     parser.add_argument('--save_name', default="cost", help='Enable to write default config only')
 

@@ -19,7 +19,7 @@ def plot_trajectory(trajectory_tensor, reference_trajectory_tensor=None, name=''
     sns.set_style("darkgrid")
 
     plot, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, sharex=True)
-    n_points = 400
+    n_points = 600
 
     # ax1.plot(np.arange(n_points), trajectory_tensor[:n_points, 0], label="Phy-DRL controller")
     # ax1.plot(np.arange(n_points), reference_trajectory_tensor[:n_points, 0], label="Model based controller")
@@ -48,7 +48,7 @@ def plot_trajectory(trajectory_tensor, reference_trajectory_tensor=None, name=''
     #            ncol=2,
     #            framealpha=0.0)
 
-    plt.xlim(0, 400)
+    plt.xlim(0, 600)
     plt.subplots_adjust(hspace=0.1)
     plt.grid(True)
     plt.savefig(f"{name}_traj.pdf", format='pdf')

@@ -9,7 +9,7 @@ from types import SimpleNamespace as Namespace
 
 
 def plot_group_training(sub_source_folder, save_name, y_label):
-    plot_training_steps = 1e6
+    plot_training_steps = 1.5e6
     interval_num = 50  # we split 1e6 into 30 intervals to calculate the confidence interval
 
     plt.figure()
@@ -72,10 +72,12 @@ def plot_group_training(sub_source_folder, save_name, y_label):
 
         data_frame = pd.DataFrame({"label": set_labels, "Value": set_values})
         plot = sns.lineplot(data=data_frame, x="label", y="Value")
-        plt.xlim(0, 1e6)
+        plt.xlim(0, 1.5e6)
+        plt.xticks([0, 200000, 400000, 600000, 800000, 1000000, 1200000, 1400000],
+                   ('0', '20k', '40k', '60k', '80k', '100k', '120k', '140k'))
 
     plot.set(xlabel="Training Steps", ylabel="Episode Reward")
-    plot.ticklabel_format(useOffset=False, style='plain')
+    # plot.ticklabel_format(useOffset=False, style='plain')
     plot.legend(loc='lower right', fontsize='large', labels=legend_list)
     plt.savefig(f'plot/NIP/{save_name}.pdf', format='pdf', bbox_inches='tight')
     # plt.savefig(f'plot/{save_name}.png', dpi=300, bbox_inches='tight')
@@ -84,9 +86,9 @@ def plot_group_training(sub_source_folder, save_name, y_label):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--folder', default="plot/NIP/nips_data_source/Reward Ubc", help='Activate usage of GPU')
+    parser.add_argument('--folder', default="plot/NIP/nips_data_source/reward_our_ubc_1.5", help='Activate usage of GPU')
     parser.add_argument('--y_label', default="Reward", help='Enable to write default config only')
-    parser.add_argument('--save_name', default="reward_ubc", help='Enable to write default config only')
+    parser.add_argument('--save_name', default="reward_nip", help='Enable to write default config only')
 
     args = parser.parse_args()
     source_folder = args.folder

@@ -117,16 +117,16 @@ def interact_loop(x_t, theta_t, ai_agent):
 # interaction loop
 for x_t in tqdm(x_t_list):
     for theta_t in theta_t_list:
-        tx_array_ubc, position_array_ubc, angle_array_ubc = interact_loop(x_t, theta_t, ai_agent=agent_ubc)
+        # tx_array_ubc, position_array_ubc, angle_array_ubc = interact_loop(x_t, theta_t, ai_agent=agent_ubc)
 
-        if len(tx_array_ubc[tx_array_ubc > 1]) == 0:
-            p1 = plt.scatter(x_t, theta_t, c='red', s=40, marker='o', edgecolors='r')
-        elif len(position_array_ubc[position_array_ubc > 0.9]) == 0 \
-                and len(angle_array_ubc[angle_array_ubc > 0.8]) == 0:
-            p2 = plt.scatter(x_t, theta_t, c='red', s=40, edgecolors='r')
-            p2.set_facecolor('none')
+        # if len(tx_array_ubc[tx_array_ubc > 1]) == 0:
+        #     p1 = plt.scatter(x_t, theta_t, c='red', s=40, marker='o', edgecolors='r')
+        # elif len(position_array_ubc[position_array_ubc > 0.9]) == 0 \
+        #         and len(angle_array_ubc[angle_array_ubc > 0.8]) == 0:
+        #     p2 = plt.scatter(x_t, theta_t, c='red', s=40, edgecolors='r')
+        #     p2.set_facecolor('none')
 
-        tx_array, position_array, angle_array = interact_loop(x_t, theta_t, ai_agent=agent_our)
+        tx_array, position_array, angle_array = interact_loop(x_t, theta_t, ai_agent=agent_ubc)
 
         if len(tx_array[tx_array > 1]) == 0:
             p3 = plt.scatter(x_t, theta_t, c='blue', s=8)
@@ -136,7 +136,7 @@ for x_t in tqdm(x_t_list):
 
 plt.xlabel(r'$x$', fontsize=16)
 plt.ylabel(r"${\Theta}$", fontsize=16)
-plt.grid()
-plt.show()
-fig1.savefig(f'plot/NIP/safety_env.pdf', format='pdf', bbox_inches='tight')
+# plt.grid()
+# plt.show()
+fig1.savefig(f'plot/NIP/safety_env_ubc_2.pdf', format='pdf', bbox_inches='tight')
 # fig1.savefig(f'plot/NIP/safety_env_our_vs_ubc_1.5.png', dpi=300, bbox_inches='tight')

@@ -16,8 +16,8 @@ from matplotlib import cm
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
  
-x_t_list = np.linspace(-0.9, 0.9, 90)
-theta_t_list = np.linspace(-0.8, 0.8,90)
+x_t_list = np.linspace(-0.9, 0.9, 80)
+theta_t_list = np.linspace(-0.8, 0.8,80)
 trajectory_length = 150
 P_matrix = np.array([[4.6074554, 1.49740096, 5.80266046, 0.99189224],
                      [1.49740096, 0.81703147, 2.61779592, 0.51179642],
@@ -161,7 +161,7 @@ z_list_ubc = []
 # ubc_result = np.zeros(shape=(len(x_t_list), len(theta_t_list)))
 our_result = np.zeros(shape=(len(x_t_list), len(theta_t_list)))
 
-for i, x_t in enumerate(x_t_list):
+for i, x_t in tqdm(enumerate(x_t_list)):
     for j, theta_t in enumerate(theta_t_list):
         tx_array, position_array, angle_array, average_performance = interact_loop(x_t, theta_t, ai_agent=agent_our)
 
@@ -177,7 +177,8 @@ for i, x_t in enumerate(x_t_list):
 
 X, Y = np.meshgrid(x_t_list, theta_t_list)
 
-c = plt.pcolormesh(X, Y, our_result, cmap='RdBu', vmin=0, vmax=np.max(our_result))
+# c = plt.pcolormesh(X, Y, our_result, cmap='OrRd', vmin=0, vmax=1)
+c = plt.pcolormesh(X, Y, our_result, vmin=0, vmax=1)
 # plt.set_xlabel(r'$x$', fontsize=10)
 # plt.set_ylabel(r"${\Theta}$", fontsize=10)
 # plt.set_zlabel("$Performance$", fontsize=10)
@@ -185,7 +186,7 @@ fig.colorbar(c)
 plt.xlabel(r'$x$', fontsize=16)
 plt.ylabel(r"${\Theta}$", fontsize=16)
 # plt.grid()
-plt.show()
-fig.savefig(f'plot/NIP/safety_set_performance_our.pdf', format='pdf', bbox_inches='tight')
+# plt.show()
+fig.savefig(f'plot/NIP/safety_set_performance_our_2.pdf', format='pdf', bbox_inches='tight')
 
 # fig1.savefig(f'plot/NIP/safety_env_our_vs_ubc_1.5.png', dpi=300, bbox_inches='tight')
