@@ -186,11 +186,20 @@ def exp_length(output_size, epd):
     return layer_shape
 
 
+# def build_mlp_model(shape_input, shape_output, name='', output_activation=None):
+#     input = Input(shape=(shape_input,), name=name + 'input', dtype=tf.float16)
+#     dense1 = Dense(256, activation='relu', name=name + 'dense1')(input)
+#     dense2 = Dense(128, activation='relu', name=name + 'dense2')(dense1)
+#     dense3 = Dense(64, activation='relu', name=name + 'dense3')(dense2)
+#     output = Dense(shape_output, activation=output_activation, name=name + 'output')(dense3)
+#     model = Model(inputs=input, outputs=output, name=name)
+#     return model
+
 def build_mlp_model(shape_input, shape_output, name='', output_activation=None):
     input = Input(shape=(shape_input,), name=name + 'input', dtype=tf.float16)
-    dense1 = Dense(256, activation='relu', name=name + 'dense1')(input)
+    dense1 = Dense(128, activation='relu', name=name + 'dense1')(input)
     dense2 = Dense(128, activation='relu', name=name + 'dense2')(dense1)
-    dense3 = Dense(64, activation='relu', name=name + 'dense3')(dense2)
+    dense3 = Dense(128, activation='relu', name=name + 'dense3')(dense2)
     output = Dense(shape_output, activation=output_activation, name=name + 'output')(dense3)
     model = Model(inputs=input, outputs=output, name=name)
     return model
@@ -284,9 +293,11 @@ def pyselu(x, inx_unk):
 
 
 def get_knowledge_matrix():
-    out1 = 5
-    out2 = 10
-    a_input_dim = 27
+    # out1 = 2  # output dim for the 1st layer
+    # out2 = 2  # output dim for the 2nd layer
+    out1 = 5  # output dim for the 1st layer
+    out2 = 5  # output dim for the 2nd layer
+    a_input_dim = 189  # augmentation dim for the input (first) layer
     params = {}
 
     CPhy_lay1_A = np.zeros((out1, a_input_dim), dtype=np.float32)
@@ -295,15 +306,16 @@ def get_knowledge_matrix():
     CphyBias_lay1_B = np.ones((out1, 1), dtype=np.float32)
 
     for i in range(out1):
-        CPhy_lay1_B[i][0] = 0
-        CPhy_lay1_B[i][1] = 0
-        CPhy_lay1_B[i][2] = 0
-        CPhy_lay1_B[i][3] = 0
-        CPhy_lay1_B[i][4] = 0
-        CPhy_lay1_B[i][5] = 0
+        CPhy_lay1_B[i][0:18] = 0
+        # CPhy_lay1_B[i][1] = 0
+        # CPhy_lay1_B[i][2] = 0
+        # CPhy_lay1_B[i][3] = 0
+        # CPhy_lay1_B[i][4] = 0
+        # CPhy_lay1_B[i][5] = 0
 
     ######second layer######
-    out1_a = 20  # todo
+    # out1_a = 5  # augmentation dim for the second input layer
+    out1_a = 20  # augmentation dim for the second input layer
 
     CPhy_lay2_A = np.zeros((out2, out1_a), dtype=np.float32)
     CPhy_lay2_B = np.ones((out2, out1_a), dtype=np.float32)
@@ -329,45 +341,3 @@ def get_knowledge_matrix():
                                params['phybiasesA'][k], params['phybiasesB'][k]])
 
     return editing_matrix
-
-# def get_knowledge_matrix_new():
-#     #####Extract Knowledge Matrix###############################################################################################
-#     out1 = 10
-#     out2 = 8
-#     a_input_dim = 27
-#     params = {}
-#     ######first layer######
-#     CPhy_lay1_A = np.zeros((out1, a_input_dim), dtype=np.float32)
-#     CPhy_lay1_B = np.ones((out1, a_input_dim), dtype=np.float32)
-#     CphyBias_lay1_A = np.zeros((out1, 1), dtype=np.float32)
-#     CphyBias_lay1_B = np.ones((out1, 1), dtype=np.float32)
-#     #######################
-#
-#     ######second layer######
-#     out1_a = 65
-#
-#     CPhy_lay2_A = np.zeros((out2, out1_a), dtype=np.float32)
-#     CPhy_lay2_B = np.ones((out2, out1_a), dtype=np.float32)
-#     CphyBias_lay2_A = np.zeros((out2, 1), dtype=np.float32)
-#     CphyBias_lay2_B = np.ones((out2, 1), dtype=np.float32)
-#     #######################
-#
-#     ######third layer######
-#     CPhy_lay3_A = np.zeros((1, out2), dtype=np.float32)
-#     CPhy_lay3_B = np.ones((1, out2), dtype=np.float32)
-#     CphyBias_lay3_A = np.zeros((1, 1), dtype=np.float32)
-#     CphyBias_lay3_B = np.ones((1, 1), dtype=np.float32)
-#     #######################
-#
-#     params['phyweightsA'] = [CPhy_lay1_A, CPhy_lay2_A, CPhy_lay3_A]
-#     params['phyweightsB'] = [CPhy_lay1_B, CPhy_lay2_B, CPhy_lay3_B]
-#     params['phybiasesA'] = [CphyBias_lay1_A, CphyBias_lay2_A, CphyBias_lay3_A]
-#     params['phybiasesB'] = [CphyBias_lay1_B, CphyBias_lay2_B, CphyBias_lay3_B]
-#
-#     editing_matrix = []
-#
-#     for k in range(len(params['phyweightsA'])):
-#         editing_matrix.append([params['phyweightsA'][k], params['phyweightsB'][k],
-#                                params['phybiasesA'][k], params['phybiasesB'][k]])
-#
-#     return editing_matrix

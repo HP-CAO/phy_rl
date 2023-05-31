@@ -1,8 +1,14 @@
-from lib.agent.ddpg import DDPGParams, DDPGAgent, TaylorParams
-from lib.env.a1 import A1Robot, A1Params
-from lib.logger.logger import LoggerParams, Logger
+import math
+
+from lib.agent.ddpg import DDPGParams, DDPGAgent
+from lib.agent.network import TaylorParams
+from lib.logger.logger import LoggerParams, Logger, plot_trajectory
 from lib.utils import ReplayMemory
+from lib.env.locomotion.envs.a1_env import A1Params, A1Robot
+import matplotlib.pyplot as plt
+
 import numpy as np
+import copy
 
 
 class Params:
@@ -17,14 +23,11 @@ class A1DDPG:
     def __init__(self, params: Params):
         self.params = params
 
-        self.robot = A1Robot(self.params.a1_params)
-
-        self.shape_observations = self.robot.states_observations_dim()
-        self.shape_action = self.robot.action_dim
-        self.replay_mem = ReplayMemory(self.params.agent_params.total_training_steps)
-
-        if self.params.a1_params.observe_reference_states:
-            self.shape_observations += self.robot.states_observations_refer_dim
+        self.a1 = A1Robot(self.params.a1_params)
+        self.shape_observations = self.a1.states_observations_dim
+        self.shape_action = self.a1.action_dim
+        # self.replay_mem = ReplayMemory(self.params.agent_params.total_training_steps)
+        self.replay_mem = ReplayMemory(self.params.agent_params.replay_buffer_size)
 
         self.agent = DDPGAgent(self.params.agent_params,
                                self.params.taylor_params,
@@ -37,66 +40,98 @@ class A1DDPG:
 
     def interaction_step(self, mode=None):
 
-        observations = self.robot.getExtendedObservation()
+        # observations = copy.deepcopy(self.a1.observation)
+        observations = copy.deepcopy(self.a1.get_tracking_error())
 
         action = self.agent.get_action(observations, mode)
 
-        observations_next, reward, failed, _ = \
-            self.robot.step(action, use_residual=self.params.agent_params.as_residual_policy)
+        _, terminal, abort = self.a1.step(action, action_mode=self.params.agent_params.action_mode)
 
-        return observations, action, observations_next, failed, reward
+        observations_next = self.a1.get_tracking_error()
+
+        r = self.a1.get_reward()
+        # print("reward:", r)
+        return observations, action, observations_next, terminal, r, abort
 
     def evaluation(self, reset_states=None, mode=None):
 
-        if mode == "test":
-            vis = True
-        else:
-            vis = False
-
         if self.params.a1_params.random_reset_eval:
-            self.robot.random_reset()
+            self.a1.random_reset()
         else:
-            self.robot.reset(reset_states, vis=vis)
+            self.a1.reset(reset_states)
 
         reward_list = []
+        distance_score_list = []
+        failed = False
 
         for step in range(self.params.agent_params.max_episode_steps):
 
-            observations, action, observations_next, failed, r = self.interaction_step(mode='eval')
+            observations, action, observations_next, failed, r, abort = \
+                self.interaction_step(mode='eval')
+
+            if abort:
+                break
 
             reward_list.append(r)
 
             if failed:
                 break
 
-        mean_reward = np.mean(reward_list)
+        if len(reward_list) == 0:
+            mean_reward = math.nan
+            mean_distance_score = math.nan
+        else:
+            mean_reward = np.mean(reward_list)
+            # mean_distance_score = np.mean(distance_score_list)
+            mean_distance_score = 0
 
-        return mean_reward
+        if mode == 'test':
+            # np.save("drl_trajectory", self.a1.states_vector)
+            # plt.figure(figsize=(9, 6))
+            # plt.plot(np.arange(len(self.a1.states_vector)), self.a1.states_vector, label='vx')
+            # plt.legend(loc='best')
+            # plt.grid(True)
+            # plt.tight_layout()
+            # plt.savefig("trajectory.png", dpi=300)
+            np.save("height_trajectory", self.a1.height_vector)
+            plt.figure(figsize=(9, 6))
+            plt.plot(np.arange(len(self.a1.height_vector)), self.a1.height_vector, label='vx')
+            plt.legend(loc='best')
+            plt.grid(True)
+            plt.tight_layout()
+            plt.savefig("height_trajectory.png", dpi=300)
+
+        eval_steps = len(reward_list)
+        return mean_reward, mean_distance_score, failed, eval_steps
 
     def train(self):
         ep = 0
         global_steps = 0
-        best_dsas = -100.  # Best distance score and survived
+        best_dsas = -10  # Best distance score and survived
         moving_average_reward = 0.0
 
         while global_steps < self.params.agent_params.total_training_steps:
 
             if self.params.a1_params.random_reset_train:
-                self.robot.random_reset()
+                self.a1.random_reset()
             else:
-                self.robot.reset()
+                self.a1.reset(step=global_steps)
 
             ep += 1
-
             reward_list = []
             critic_loss_list = []
 
             failed = False
+
             ep_steps = 0
 
             for step in range(self.params.agent_params.max_episode_steps):
 
-                observations, action, observations_next, failed, r = self.interaction_step(mode='train')
+                observations, action, observations_next, failed, r, abort = \
+                    self.interaction_step(mode='train')
+
+                if abort:
+                    break
 
                 self.replay_mem.add((observations, action, r, observations_next, failed))
 
@@ -115,22 +150,26 @@ class A1DDPG:
                 if failed:
                     break
 
-            mean_reward = np.mean(reward_list)
-            mean_critic_loss = np.mean(critic_loss_list)
+            if len(reward_list) == 0:
+                continue
+            else:
+                mean_reward = np.mean(reward_list)
+                mean_critic_loss = np.mean(critic_loss_list)
 
             self.logger.log_training_data(mean_reward, 0, mean_critic_loss, failed, global_steps)
-
             print(f"Training at {ep} episodes: average_reward: {mean_reward:.6},"
                   f"critic_loss: {mean_critic_loss:.6}, total_steps_ep: {ep_steps} ")
 
             if ep % self.params.logger_params.evaluation_period == 0:
-                eval_mean_reward = self.evaluation()
-                self.logger.log_evaluation_data(eval_mean_reward, 0, False, global_steps)
+                eval_mean_reward, eval_mean_distance_score, eval_failed, eval_steps = self.evaluation()
+                self.logger.log_evaluation_data(eval_mean_reward, eval_mean_distance_score, eval_failed, global_steps)
                 moving_average_reward = 0.95 * moving_average_reward + 0.05 * eval_mean_reward
                 if moving_average_reward > best_dsas:
                     self.agent.save_weights(self.logger.model_dir + '_best')
                     best_dsas = moving_average_reward
+                if eval_steps == 10000:
+                    self.agent.save_weights(self.logger.model_dir + f'_{global_steps}')
             self.agent.save_weights(self.logger.model_dir)
 
     def test(self):
-        self.evaluation(mode='test', reset_states=None)
+        self.evaluation(mode='test')

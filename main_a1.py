@@ -7,13 +7,13 @@ from utils import *
 
 
 def main_train(p):
-    ips = A1DDPG(p)
-    ips.train()
+    robot = A1DDPG(p)
+    robot.train()
 
 
 def main_test(p):
-    ips = A1DDPG(p)
-    ips.test()
+    robot = A1DDPG(p)
+    robot.test()
 
 
 if __name__ == '__main__':
@@ -31,7 +31,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.generate_config:
-        generate_config(Params(), "config/a1_train.json")
+        generate_config(Params(), "config/train.json")
         exit("config file generated")
 
     if not args.gpu:

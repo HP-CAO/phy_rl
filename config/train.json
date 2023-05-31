@@ -1,49 +1,16 @@
 {
-    "cartpole_params": {
-        "x_threshold": 0.3,
-        "theta_dot_threshold": 15,
-        "kinematics_integrator": "euler",
-        "gravity": 9.8,
-        "mass_cart": 0.94,
-        "mass_pole": 0.23,
-        "force_mag": 5.0,
-        "voltage_mag": 5.0,
-        "length": 0.64,
-        "theta_random_std": 0.8,
-        "friction_cart": 10,
-        "friction_pole": 0.0011,
-        "simulation_frequency": 30,
-        "with_friction": true,
-        "force_input": true,
-        "ini_states": [
-            0.1,
-            0.1,
-            0.15,
-            0.0,
-            false
-        ],
-        "targets": [
-            0.0,
-            0.0
-        ],
-        "distance_score_factor": 0,
-        "tracking_error_factor": 1,
-        "lyapunov_reward_factor": 1,
-        "high_performance_reward_factor": 0.5,
-        "action_penalty": 0,
-        "crash_penalty": 0,
-        "observe_reference_states": false,
-        "random_reset_train": true,
+    "a1_params": {
+        "show_gui": false,
+        "time_step": 0.002,
+        "if_add_terrain": false,
         "random_reset_eval": false,
-        "update_reference_model": true,
-        "sparse_reset": false,
-        "use_ubc_lya_reward": true,
-        "add_uu_dis": false,
-        "uu_a": null,
-        "uu_b": null
+        "random_reset_train": false,
+        "if_record_video": false,
+        "action_magnitude": 5.5,
+        "reward_type": "lyapunov"
     },
     "agent_params": {
-        "action_noise": "OU",
+        "action_noise": "no",
         "action_noise_factor": 1,
         "action_noise_half_decay_time": 1000000.0,
         "soft_alpha": 0.005,
@@ -51,15 +18,16 @@
         "learning_rate_critic": 0.0003,
         "batch_size": 128,
         "add_target_action_noise": true,
-        "gamma_discount": 0.99,
+        "gamma_discount": 0.2,
         "model_path": null,
         "total_training_steps": 1000000.0,
-        "max_episode_steps": 500,
+        "max_episode_steps": 10000,
         "experience_prefill_size": 128,
         "mode": "train",
-        "as_residual_policy": false,
+        "action_mode": "residual",
         "use_taylor_nn": false,
-        "taylor_editing": false
+        "taylor_editing": false,
+        "replay_buffer_size": 1e6
     },
     "logger_params": {
         "evaluation_period": 20,
@@ -74,8 +42,8 @@
             6
         ],
         "aug_order": [
-            0,
-            0,
+            1,
+            1,
             0
         ],
         "initializer_w": "tn",

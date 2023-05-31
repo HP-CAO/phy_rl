@@ -1,4 +1,5 @@
-from lib.agent.ddpg import DDPGParams, DDPGAgent, TaylorParams
+from lib.agent.ddpg import DDPGParams, DDPGAgent
+from lib.agent.network import TaylorParams
 from lib.env.cart_pole import CartpoleParams, Cartpole, states2observations
 from lib.logger.logger import LoggerParams, Logger, plot_trajectory
 from lib.utils import ReplayMemory
@@ -49,7 +50,7 @@ class CartpoleDDPG:
 
         action = self.agent.get_action(observations, mode)
 
-        next_states = self.cartpole.step(action, use_residual=self.params.agent_params.as_residual_policy)
+        next_states = self.cartpole.step(action, action_mode=self.params.agent_params.action_mode)
 
         if self.params.cartpole_params.update_reference_model:
             self.cartpole.refer_step()

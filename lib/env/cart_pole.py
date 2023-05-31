@@ -89,7 +89,7 @@ class Cartpole(gym.Env):
         self.states_refer = new_states  # to update animation
         return self.states_refer
 
-    def step(self, action: float, use_residual=False):
+    def step(self, action: float, action_mode="residual"):
         """
         param: action: a scalar value (not numpy type) [-1,1]
         return: a list of states
@@ -102,7 +102,7 @@ class Cartpole(gym.Env):
             voltage = action * self.params.voltage_mag
             force = self.voltage2force(voltage, x_dot)
 
-        if use_residual:
+        if action_mode == 'residual':
             F = np.array([8.25691599, 6.76016534, 40.12484514, 6.84742553])
             force_res = F[0] * x + F[1] * x_dot + F[2] * theta + F[3] * theta_dot  # residual control commands
             force = force + force_res  # RL control commands + residual control commands

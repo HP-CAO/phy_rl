@@ -19,12 +19,13 @@ class DDPGParams:
         self.gamma_discount = 0.99
         self.model_path = None
         self.total_training_steps = 1e6
-        self.max_episode_steps = 500
+        self.max_episode_steps = 10000
         self.experience_prefill_size = 128  # no less than the batch_size
         self.mode = 'train'
-        self.as_residual_policy = False
+        self.action_mode = 'residual'
         self.use_taylor_nn = False
         self.taylor_editing = False
+        self.replay_buffer_size = 1e6
 
 
 class DDPGAgent:
@@ -88,6 +89,11 @@ class DDPGAgent:
             self.actor = build_mlp_model(shape_observations, shape_action, name="actor", output_activation='tanh')
             self.actor_target = \
                 build_mlp_model(shape_observations, shape_action, name="actor_target", output_activation='tanh')
+            #
+            # self.actor = build_mlp_model(shape_observations, shape_action, name="actor")
+            # self.actor_target = \
+            #     build_mlp_model(shape_observations, shape_action, name="actor_target")
+
             self.critic = build_mlp_model(shape_observations + shape_action, 1, name="critic")
             self.critic_target = build_mlp_model(shape_observations + shape_action, 1, name="critic_target")
             self.actor.summary()
