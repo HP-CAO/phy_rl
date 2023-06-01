@@ -26,7 +26,6 @@ class A1DDPG:
         self.a1 = A1Robot(self.params.a1_params)
         self.shape_observations = self.a1.states_observations_dim
         self.shape_action = self.a1.action_dim
-        # self.replay_mem = ReplayMemory(self.params.agent_params.total_training_steps)
         self.replay_mem = ReplayMemory(self.params.agent_params.replay_buffer_size)
 
         self.agent = DDPGAgent(self.params.agent_params,
@@ -61,7 +60,6 @@ class A1DDPG:
             self.a1.reset(reset_states)
 
         reward_list = []
-        distance_score_list = []
         failed = False
 
         for step in range(self.params.agent_params.max_episode_steps):
