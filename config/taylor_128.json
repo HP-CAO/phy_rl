@@ -1,0 +1,59 @@
+{
+    "a1_params": {
+        "show_gui": false,
+        "time_step": 0.002,
+        "if_add_terrain": false,
+        "random_reset_eval": false,
+        "random_reset_train": false,
+        "if_record_video": false,
+        "action_magnitude": 5.5,
+        "reward_type": "lyapunov"
+    },
+    "agent_params": {
+        "action_noise": "no",
+        "action_noise_factor": 1,
+        "action_noise_half_decay_time": 1000000.0,
+        "soft_alpha": 0.005,
+        "learning_rate_actor": 0.0003,
+        "learning_rate_critic": 0.0003,
+        "batch_size": 128,
+        "add_target_action_noise": true,
+        "gamma_discount": 0.2,
+        "model_path": null,
+        "total_training_steps": 5000000,
+        "max_episode_steps": 10000,
+        "experience_prefill_size": 128,
+        "mode": "train",
+        "action_mode": "residual",
+        "use_taylor_nn": true,
+        "taylor_editing": false,
+        "replay_buffer_size": 1e6
+    },
+    "logger_params": {
+        "evaluation_period": 20,
+        "model_name": "drl",
+        "visualize_eval": false,
+        "force_override": false,
+        "mode": "train"
+    },
+    "taylor_params": {
+        "dense_dims": [
+            128,
+            128,
+            128
+        ],
+        "aug_order": [
+            0,
+            0,
+            0,
+            0
+        ],
+        "initializer_w": "tn",
+        "initializer_b": "uniform",
+        "activations": [
+            "relu",
+            "relu",
+            "relu"
+        ]
+    }
+}

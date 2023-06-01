@@ -18,7 +18,8 @@ class TaylorParams:
 class TaylorModel(Model):
     def __init__(self, params: TaylorParams, input_dim, output_dim, output_activation, taylor_editing=False):
         super(TaylorModel, self).__init__()
-        dim_list = [input_dim, params.dense_dims[0], params.dense_dims[1], output_dim]
+        # dim_list = [input_dim, params.dense_dims[0], params.dense_dims[1], output_dim]
+        dim_list = get_dim_list(input_dim, params.dense_dims, output_dim)
         aug_order = params.aug_order
         activation_list = params.activations
         activation_list.append(output_activation)
@@ -341,3 +342,11 @@ def get_knowledge_matrix():
                                params['phybiasesA'][k], params['phybiasesB'][k]])
 
     return editing_matrix
+
+
+def get_dim_list(input_dim, dense_dims, output_dim):
+    dim_list = [input_dim]
+    for dim in dense_dims:
+        dim_list.append(dim)
+    dim_list.append(output_dim)
+    return dim_list
