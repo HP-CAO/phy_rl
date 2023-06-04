@@ -153,7 +153,7 @@ class A1Robot:
         plane = self.p.loadURDF("plane.urdf")
 
         # self.p.changeDynamics(plane, -1, lateralFriction=0.6)  # change friction from higher to lower
-        self.p.changeDynamics(plane, -1, lateralFriction=0.5)  # change friction from higher to lower
+        self.p.changeDynamics(plane, -1, lateralFriction=0.44)  # change friction from higher to lower
 
         if self.params.if_record_video:
             self.p.startStateLogging(self.p.STATE_LOGGING_VIDEO_MP4, f"{step}_record.mp4")
