@@ -308,12 +308,6 @@ def get_knowledge_matrix():
 
     for i in range(out1):
         CPhy_lay1_B[i][0:18] = 0
-        # CPhy_lay1_B[i][1] = 0
-        # CPhy_lay1_B[i][2] = 0
-        # CPhy_lay1_B[i][3] = 0
-        # CPhy_lay1_B[i][4] = 0
-        # CPhy_lay1_B[i][5] = 0
-
     ######second layer######
     # out1_a = 5  # augmentation dim for the second input layer
     out1_a = 20  # augmentation dim for the second input layer

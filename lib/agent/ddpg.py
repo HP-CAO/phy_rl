@@ -89,11 +89,6 @@ class DDPGAgent:
             self.actor = build_mlp_model(shape_observations, shape_action, name="actor", output_activation='tanh')
             self.actor_target = \
                 build_mlp_model(shape_observations, shape_action, name="actor_target", output_activation='tanh')
-            #
-            # self.actor = build_mlp_model(shape_observations, shape_action, name="actor")
-            # self.actor_target = \
-            #     build_mlp_model(shape_observations, shape_action, name="actor_target")
-
             self.critic = build_mlp_model(shape_observations + shape_action, 1, name="critic")
             self.critic_target = build_mlp_model(shape_observations + shape_action, 1, name="critic_target")
             self.actor.summary()
