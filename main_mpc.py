@@ -2,6 +2,7 @@ from lib.env.locomotion.envs.a1_env import A1Params
 from lib.env.locomotion.envs.a1_env import A1Robot
 
 a1_params = A1Params()
+a1_params.if_add_terrain = True
 a1 = A1Robot(a1_params)
 
 actions = [0.] * 60
