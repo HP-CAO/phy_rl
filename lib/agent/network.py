@@ -296,8 +296,8 @@ def pyselu(x, inx_unk):
 def get_knowledge_matrix():
     # out1 = 2  # output dim for the 1st layer
     # out2 = 2  # output dim for the 2nd layer
-    out1 = 5  # output dim for the 1st layer
-    out2 = 5  # output dim for the 2nd layer
+    out1 = 25  # output dim for the 1st layer
+    out2 = 25  # output dim for the 2nd layer
     a_input_dim = 189  # augmentation dim for the input (first) layer
     params = {}
 
@@ -310,7 +310,7 @@ def get_knowledge_matrix():
         CPhy_lay1_B[i][0:18] = 0
     ######second layer######
     # out1_a = 5  # augmentation dim for the second input layer
-    out1_a = 20  # augmentation dim for the second input layer
+    out1_a = 350  # augmentation dim for the second input layer
 
     CPhy_lay2_A = np.zeros((out2, out1_a), dtype=np.float32)
     CPhy_lay2_B = np.ones((out2, out1_a), dtype=np.float32)
