@@ -9,8 +9,8 @@ from types import SimpleNamespace as Namespace
 
 
 def plot_group_training(sub_source_folder, save_name, y_label):
-    plot_training_steps = 1.5e6
-    interval_num = 50  # we split 1e6 into 30 intervals to calculate the confidence interval
+    plot_training_steps = 1.0e6
+    interval_num = 20  # we split 1e6 into 30 intervals to calculate the confidence interval
 
     plt.figure()
     exp_set_list = os.listdir(sub_source_folder)
@@ -23,7 +23,12 @@ def plot_group_training(sub_source_folder, save_name, y_label):
     plot = None
     legend_list = []
 
-    for exp_set in exp_set_list:
+    # ['FC MLP', 'KN 20', 'KN 25', 'KN 15', 'KN 5', 'KN 10']
+
+    print_list = ['FC MLP', 'KN 15']
+    save_name = print_list[0] + print_list[1] + "200k"
+
+    for exp_set in print_list:
 
         # if exp_set == "S Reward":
         #     continue
@@ -31,7 +36,6 @@ def plot_group_training(sub_source_folder, save_name, y_label):
         legend_list.append(exp_set)
         set_repeats_path = os.path.join(sub_source_folder, exp_set)
         set_repeats_list = os.listdir(set_repeats_path)
-        print(set_repeats_list)
 
         if len(set_repeats_list) == 0:
             continue
@@ -46,6 +50,10 @@ def plot_group_training(sub_source_folder, save_name, y_label):
 
             meta_data_steps = meta_data[:, 1]
             meta_data_value = meta_data[:, 2]
+            index = np.count_nonzero(meta_data_steps < 200000)
+            meta_data_steps = meta_data_steps[index:]
+            meta_data_value = meta_data_value[index:]
+
             # meta_data_value = np.log10(-1 * meta_data_value + 0.005)
 
             if max(meta_data_steps) > plot_training_steps:
@@ -71,10 +79,14 @@ def plot_group_training(sub_source_folder, save_name, y_label):
         set_values = np.concatenate(set_values_list, axis=-1)
 
         data_frame = pd.DataFrame({"label": set_labels, "Value": set_values})
-        plot = sns.lineplot(data=data_frame, x="label", y="Value")
-        plt.xlim(0, 1.5e6)
-        plt.xticks([0, 200000, 400000, 600000, 800000, 1000000, 1200000, 1400000],
-                   ('0', '20k', '40k', '60k', '80k', '100k', '120k', '140k'))
+        plot = sns.lineplot(data=data_frame, x="label", y="Value", ci=95)
+        plt.xlim(2e5, 1e6)
+        # plt.ylim(-0.3, -0.10)
+        # plt.xticks([0, 200000, 400000, 600000, 800000, 1000000],
+        #            ('0', '200k', '400k', '600k', '800k', '1M')
+        #
+        plt.xticks([200000, 400000, 600000, 800000, 1000000],
+                   ('200k', '400k', '600k', '800k', '1M'))
 
     plot.set(xlabel="Training Steps", ylabel="Episode Reward")
     # plot.ticklabel_format(useOffset=False, style='plain')
@@ -86,12 +98,9 @@ def plot_group_training(sub_source_folder, save_name, y_label):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--folder', default="plot/NIP/nips_data_source/reward_our_ubc_1.5", help='Activate usage of GPU')
+    parser.add_argument('--folder', default="plot/NIP/source/", help='Activate usage of GPU')
     parser.add_argument('--y_label', default="Reward", help='Enable to write default config only')
-    parser.add_argument('--save_name', default="reward_nip", help='Enable to write default config only')
-    parser.add_argument('--folder', default="plot/NIP/nips_data_source/reward taylor_3_base", help='Activate usage of GPU')
-    parser.add_argument('--y_label', default="Reward", help='Enable to write default config only')
-    parser.add_argument('--save_name', default="reward taylor_3_base", help='Enable to write default config only')
+    parser.add_argument('--save_name', default="base_15", help='Enable to write default config only')
 
     args = parser.parse_args()
     source_folder = args.folder
