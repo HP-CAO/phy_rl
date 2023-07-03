@@ -152,7 +152,7 @@ class A1Robot:
         self.p.setAdditionalSearchPath(pybullet_data.getDataPath())
         plane = self.p.loadURDF("plane.urdf")
 
-        # self.p.changeDynamics(plane, -1, lateralFriction=0.6)  # change friction from higher to lower
+        # self.p.changeDynamics(plane, -1, lateralFriction=0.575)  # change friction from higher to lower
         self.p.changeDynamics(plane, -1, lateralFriction=0.44)  # change friction from higher to lower
 
         if self.params.if_record_video:
