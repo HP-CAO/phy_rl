@@ -14,9 +14,10 @@ from lib.env.locomotion.agents.whole_body_controller import leg_controller
 from lib.env.locomotion.agents.whole_body_controller import qp_torque_optimizer
 
 _FORCE_DIMENSION = 3
-KP = np.array((0., 0., 100., 100., 100., 0.))
+# KP = np.array((0., 0., 100., 100., 100., 0.))
+KP = np.array((0.1, 0.1, 100., 100., 100., 0.1))
 KD = np.array((40., 30., 10., 10., 10., 30.))
-MAX_DDQ = np.array((10., 10., 10., 20., 20., 20.))
+MAX_DDQ = np.array((10., 10., 10., 20., 20., 20.)) * 1.8
 MIN_DDQ = -MAX_DDQ
 
 

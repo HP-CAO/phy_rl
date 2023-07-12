@@ -110,7 +110,6 @@ class A1Params:
         self.reward_type = 'velocity'
 
 
-
 class A1Robot:
     def __init__(self, params: A1Params):
         self.params = params
@@ -150,10 +149,10 @@ class A1Robot:
         self.p.setGravity(0, 0, -9.8)
         self.p.setPhysicsEngineParameter(enableConeFriction=0)
         self.p.setAdditionalSearchPath(pybullet_data.getDataPath())
-        plane = self.p.loadURDF("plane.urdf")
+        plane = self.p.loadURDF("./lib/env/locomotion/envs/meshes/plane.urdf")
 
         # self.p.changeDynamics(plane, -1, lateralFriction=0.575)  # change friction from higher to lower
-        self.p.changeDynamics(plane, -1, lateralFriction=0.44)  # change friction from higher to lower
+        self.p.changeDynamics(plane, -1, lateralFriction=0.5)  # change friction from higher to lower
 
         if self.params.if_record_video:
             self.p.startStateLogging(self.p.STATE_LOGGING_VIDEO_MP4, f"{step}_record.mp4")
@@ -239,13 +238,17 @@ class A1Robot:
         com_position_xyz = self.mpc_control.stance_leg_controller.estimate_robot_x_y_z()
         base_rpy_rate = self.states['base_rpy_rate']
         com_velocity = self.states['base_vels_body_frame']
-        states_vector = np.hstack((angle, com_position_xyz, base_rpy_rate, com_velocity))
+        states_vector = np.hstack((com_position_xyz, angle, com_velocity, base_rpy_rate))
+        # states_vector = np.hstack((angle, com_position_xyz, base_rpy_rate, com_velocity))
         return states_vector
 
     def get_tracking_error(self):  # this is used for computing reward
         reference_vx = 1.0
         reference_p_z = 0.24
-        reference_vector = np.array([0., 0., 0., 0, 0, reference_p_z, 0., 0., 0., reference_vx, 0., 0.])
+        # reference_vector = np.array([0., 0., 0., 0, 0, reference_p_z, 0., 0., 0., reference_vx, 0., 0.])
+
+        reference_vector = np.array([0, 0, reference_p_z, 0., 0., 0., reference_vx, 0., 0., 0., 0., 0.])
+
         states_vector_robot = self.get_states_vector()
         tracking_error = states_vector_robot - reference_vector
         return tracking_error
@@ -276,19 +279,50 @@ class A1Robot:
 
     def get_ly_reward(self):
 
-        p_vector = [0, 0, 0, 0, 0, 0, 1.81666331e-04, 1.81892955e-04,
-                    1.87235756e-04, 1, 1.88585412e-04, 1.88390268e-04]
+        # p_vector = [0, 0, 0, 0, 0, 0, 1.81666331e-04, 1.81892955e-04,
+        #             1.87235756e-04, 1, 1.88585412e-04, 1.88390268e-04]
+        #
+        # p_matrix = np.diag(p_vector)
 
-        p_matrix = np.diag(p_vector)
+        p_matrix = np.array([[6.3394, 0, 0, 0, 0, 0, 0.4188, 0, 0, 0, 0, 0],
+                             [0, 1.4053, 0, 0, 0, 0, 0, 0.3018, 0, 0, 0, 0],
+                             [0, 0, 94.0914, 0, 0, 0, 0, 0, 9.1062, 0, 0, 0],
+                             [0, 0, 0, 95.1081, 0, 0, 0, 0, 0, 9.2016, 0, 0],
+                             [0, 0, 0, 0, 95.1081, 0, 0, 0, 0, 0, 9.2016, 0],
+                             [0, 0, 0, 0, 0, 1.4053, 0, 0, 0, 0, 0, 0.3018],
+                             [0.4188, 0, 0, 0, 0, 0, 106.1137, 0, 0, 0, 0, 0],
+                             [0, 0.3018, 0, 0, 0, 0, 0, 77.1735, 0, 0, 0, 0],
+                             [0, 0, 9.1062, 0, 0, 0, 0, 0, 1.8594, 0, 0, 0],
+                             [0, 0, 0, 9.2016, 0, 0, 0, 0, 0, 1.8783, 0, 0],
+                             [0, 0, 0, 0, 9.2016, 0, 0, 0, 0, 0, 1.8783, 0],
+                             [0, 0, 0, 0, 0, 0.3018, 0, 0, 0, 0, 0, 77.1735]]) * 1
+
+        M_matrix = np.array([[6.33931716274651, 0, 0, 0, 0, 0, 0.39824214223179, 0, 0, 0, 0, 0],
+                             [0, 1.40521824475728, 0, 0, 0, 0, 0, 0.286679284833682, 0, 0, 0, 0],
+                             [0, 0, 92.2887010538464, 0, 0, 0, 0, 0, 8.92428326269013, 0, 0, 0],
+                             [0, 0, 0, 93.2865880895433, 0, 0, 0, 0, 0, 9.01777538552449, 0, 0],
+                             [0, 0, 0, 0, 93.2865880895433, 0, 0, 0, 0, 0, 9.01777538552449, 0],
+                             [0, 0, 0, 0, 0, 1.40521824475728, 0, 0, 0, 0, 0, 0.286679284833682],
+                             [0.39824214223179, 0, 0, 0, 0, 0, 97.7952232108596, 0, 0, 0, 0, 0],
+                             [0, 0.286679284833682, 0, 0, 0, 0, 0, 72.6131010296885, 0, 0, 0, 0],
+                             [0, 0, 8.92428326269013, 0, 0, 0, 0, 0, 1.84054305542176, 0, 0, 0],
+                             [0, 0, 0, 9.01777538552449, 0, 0, 0, 0, 0, 1.8592311555769, 0, 0],
+                             [0, 0, 0, 0, 9.01777538552449, 0, 0, 0, 0, 0, 1.8592311555769, 0],
+                             [0, 0, 0, 0, 0, 0.286679284833682, 0, 0, 0, 0, 0, 72.6131010296885]]) * 1
+
         tracking_error_current = self.get_tracking_error()
         tracking_error_current = np.expand_dims(tracking_error_current, axis=-1)
-        # tracking_error_pre = self.previous_tracking_error
-        # tracking_error_pre = np.expand_dims(tracking_error_pre, axis=-1)
+        tracking_error_pre = self.previous_tracking_error
+        tracking_error_pre = np.expand_dims(tracking_error_pre, axis=-1)
 
         ly_reward_cur = np.transpose(tracking_error_current, axes=(1, 0)) @ p_matrix @ tracking_error_current
+        ly_reward_pre = np.transpose(tracking_error_pre, axes=(1, 0)) @ M_matrix @ tracking_error_pre
+
         # ly_reward_pre = np.transpose(tracking_error_pre, axes=(1, 0)) @ p_matrix @ tracking_error_pre
-        # reward = ly_reward_pre - ly_reward_cur
-        return -1 * ly_reward_cur
+
+        reward = ((ly_reward_pre - ly_reward_cur) * 0.01)
+
+        return reward
 
     def initialize_env(self):
         self.reset(step=0)

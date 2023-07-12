@@ -25,8 +25,8 @@
         "experience_prefill_size": 300,
         "mode": "train",
         "action_mode": "residual",
-        "use_taylor_nn": true,
-        "taylor_editing": true,
+        "use_taylor_nn": false,
+        "taylor_editing": false,
         "replay_buffer_size": 51000
     },
     "logger_params": {
