@@ -152,7 +152,7 @@ class A1Robot:
         plane = self.p.loadURDF("./lib/env/locomotion/envs/meshes/plane.urdf")
 
         # self.p.changeDynamics(plane, -1, lateralFriction=0.575)  # change friction from higher to lower
-        self.p.changeDynamics(plane, -1, lateralFriction=0.5)  # change friction from higher to lower
+        self.p.changeDynamics(plane, -1, lateralFriction=0.44)  # change friction from higher to lower
 
         if self.params.if_record_video:
             self.p.startStateLogging(self.p.STATE_LOGGING_VIDEO_MP4, f"{step}_record.mp4")
@@ -211,8 +211,18 @@ class A1Robot:
         velocity_in_body_frame = state["base_vels_body_frame"]
         observation.extend(velocity_in_body_frame)
 
-        if abs(roll) > angle_threshold or abs(pitch) > angle_threshold:
-            print("roll", roll, "pitch", pitch)
+        # if abs(roll) > angle_threshold or abs(pitch) > angle_threshold:
+        #     print("roll", roll, "pitch", pitch)
+        #     termination = True
+
+        confall = self.mpc_control.stance_leg_controller.estimate_robot_x_y_z()
+
+        fall_threshold = 0.12
+
+        # if abs(roll) > angle_threshold or abs(pitch) > angle_threshold:
+
+        if abs(confall[2]) < fall_threshold:
+            print("Fall: height:", confall[2])
             termination = True
 
         if math.isnan(float(robot_linear_velocity[0])):
