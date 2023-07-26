@@ -25,12 +25,13 @@ class TaylorModel(Model):
         activation_list.append(output_activation)
         weights_shape = exp_length(dim_list, aug_order).astype(np.int64)  # w = [dim_neurons, input_dim]
         num_layers = len(weights_shape)
-        print(weights_shape)
+        print(num_layers)
 
         self.layer_list = []
 
         if taylor_editing:
-            editing_matrix = get_knowledge_matrix()
+            editing_matrix = get_knowledge_matrix(out1=params.dense_dims[0], out2=params.dense_dims[1],
+                                                  a_input_dim=weights_shape[0][1], out1_a=weights_shape[1][1])
         else:
             editing_matrix = [None] * num_layers
 
@@ -294,12 +295,12 @@ def pyselu(x, inx_unk):
     return ex
 
 
-def get_knowledge_matrix():
+def get_knowledge_matrix(out1, out2, a_input_dim, out1_a):
     # out1 = 2  # output dim for the 1st layer
     # out2 = 2  # output dim for the 2nd layer
-    out1 = 15  # output dim for the 1st layer
-    out2 = 15  # output dim for the 2nd layer
-    a_input_dim = 189  # augmentation dim for the input (first) layer
+    # out1 = 15  # output dim for the 1st layer
+    # out2 = 15  # output dim for the 2nd layer
+    # a_input_dim = 189  # augmentation dim for the input (first) layer
     params = {}
 
     CPhy_lay1_A = np.zeros((out1, a_input_dim), dtype=np.float32)
@@ -311,7 +312,7 @@ def get_knowledge_matrix():
         CPhy_lay1_B[i][0:18] = 0
     ######second layer######
     # out1_a = 5  # augmentation dim for the second input layer
-    out1_a = 135  # augmentation dim for the second input layer
+    # out1_a = 135  # augmentation dim for the second input layer
 
     CPhy_lay2_A = np.zeros((out2, out1_a), dtype=np.float32)
     CPhy_lay2_B = np.ones((out2, out1_a), dtype=np.float32)

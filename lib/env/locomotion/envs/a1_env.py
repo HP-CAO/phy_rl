@@ -326,9 +326,9 @@ class A1Robot:
         tracking_error_pre = np.expand_dims(tracking_error_pre, axis=-1)
 
         ly_reward_cur = np.transpose(tracking_error_current, axes=(1, 0)) @ p_matrix @ tracking_error_current
-        ly_reward_pre = np.transpose(tracking_error_pre, axes=(1, 0)) @ M_matrix @ tracking_error_pre
+        # ly_reward_pre = np.transpose(tracking_error_pre, axes=(1, 0)) @ M_matrix @ tracking_error_pre
 
-        # ly_reward_pre = np.transpose(tracking_error_pre, axes=(1, 0)) @ p_matrix @ tracking_error_pre
+        ly_reward_pre = np.transpose(tracking_error_pre, axes=(1, 0)) @ p_matrix @ tracking_error_pre
 
         reward = ((ly_reward_pre - ly_reward_cur) * 0.01)
 
