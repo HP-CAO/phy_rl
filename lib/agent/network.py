@@ -25,7 +25,6 @@ class TaylorModel(Model):
         activation_list.append(output_activation)
         weights_shape = exp_length(dim_list, aug_order).astype(np.int64)  # w = [dim_neurons, input_dim]
         num_layers = len(weights_shape)
-        print(weights_shape)
 
         self.layer_list = []
 
