@@ -20,7 +20,7 @@
         "add_target_action_noise": true,
         "gamma_discount": 0.1,
         "model_path": null,
-        "total_training_steps": 500000.0,
+        "total_training_steps": 1000000.0,
         "max_episode_steps": 10200,
         "experience_prefill_size": 300,
         "mode": "train",
@@ -30,7 +30,7 @@
         "replay_buffer_size": 51000
     },
     "logger_params": {
-        "evaluation_period": 20,
+        "evaluation_period": 2,
         "model_name": "drl",
         "visualize_eval": false,
         "force_override": false,
