@@ -165,7 +165,7 @@ class A1DDPG:
                 if moving_average_reward > best_dsas:
                     self.agent.save_weights(self.logger.model_dir + '_best')
                     best_dsas = moving_average_reward
-                if eval_steps == 10000:
+                if eval_steps == self.params.agent_params.max_episode_steps:
                     self.agent.save_weights(self.logger.model_dir + f'_{global_steps}')
             self.agent.save_weights(self.logger.model_dir)
 
