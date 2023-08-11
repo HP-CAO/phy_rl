@@ -100,7 +100,7 @@ def _generate_example_linear_angular_speed(t):
 
 class A1Params:
     def __init__(self):
-        self.show_gui = True
+        self.show_gui = False
         self.time_step = 0.002  # 1 / control frequency
         self.if_add_terrain = False
         self.random_reset_eval = False
@@ -128,7 +128,8 @@ class A1Robot:
         self.termination = None
         self.states = None
         self.observation = None
-        self.target_lin_speed = [1.0, 0, 0]
+        # self.target_lin_speed = [1.0, 0, 0]
+        self.target_lin_speed = [-1.3, 0, 0]
         self.target_ang_speed = 0.0
         self.diff_q = None
         self.diff_dq = None
@@ -152,7 +153,8 @@ class A1Robot:
         plane = self.p.loadURDF("./lib/env/locomotion/envs/meshes/plane.urdf")
 
         # self.p.changeDynamics(plane, -1, lateralFriction=0.575)  # change friction from higher to lower
-        self.p.changeDynamics(plane, -1, lateralFriction=0.44)  # change friction from higher to lower
+        # self.p.changeDynamics(plane, -1, lateralFriction=0.44)  # change friction from higher to lower
+        self.p.changeDynamics(plane, -1, lateralFriction=0.6)  # change friction from higher to lower
 
         if self.params.if_record_video:
             self.p.startStateLogging(self.p.STATE_LOGGING_VIDEO_MP4, f"{step}_record.mp4")
@@ -166,7 +168,7 @@ class A1Robot:
 
         if self.params.if_add_terrain:
             self.add_terrain()
-
+        self.add_lane()
         self.mpc_control = _setup_controller(self.robot)  # MPC controller for low-level control
         self.mpc_control.reset()
         self.states = self.get_state()
@@ -253,7 +255,8 @@ class A1Robot:
         return states_vector
 
     def get_tracking_error(self):  # this is used for computing reward
-        reference_vx = 1.0
+        # reference_vx = 1.0
+        reference_vx = -1.3
         reference_p_z = 0.24
         # reference_vector = np.array([0., 0., 0., 0, 0, reference_p_z, 0., 0., 0., reference_vx, 0., 0.])
 
@@ -397,3 +400,30 @@ class A1Robot:
 
         self.p.changeDynamics(step1, -1, lateralFriction=0.85)
         self.p.changeDynamics(step2, -1, lateralFriction=0.85)
+
+    def add_lane(self):
+
+        # all units are in meters
+        track_length = 5
+        track_width = 0.03
+        track_height = 0.0005
+        lane_half_width = 0.4
+        track_left = self.p.createVisualShape(self.p.GEOM_BOX, halfExtents=[track_length, track_width, track_height],
+                                              rgbaColor=[1, 0, 0, 0.7])
+        track_middle = self.p.createVisualShape(self.p.GEOM_BOX, halfExtents=[track_length, track_width, track_height],
+                                                rgbaColor=[0, 0, 1, 0.7])
+        track_right = self.p.createVisualShape(self.p.GEOM_BOX, halfExtents=[track_length, track_width, track_height],
+                                               rgbaColor=[1, 0, 0, 0.7])
+
+        boxOrigin_x = 0
+        self.p.createMultiBody(baseMass=0, baseVisualShapeIndex=track_left,
+                               basePosition=[boxOrigin_x, lane_half_width, 0.0005],
+                               baseOrientation=[0.0, 0.0, 0.0, 1])
+
+        self.p.createMultiBody(baseMass=0, baseVisualShapeIndex=track_middle,
+                               basePosition=[boxOrigin_x, 0, 0.0005],
+                               baseOrientation=[0.0, 0.0, 0.0, 1])
+
+        self.p.createMultiBody(baseMass=0, baseVisualShapeIndex=track_right,
+                               basePosition=[boxOrigin_x, -lane_half_width, 0.0005],
+                               baseOrientation=[0.0, 0.0, 0.0, 1])
