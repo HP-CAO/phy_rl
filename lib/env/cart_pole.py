@@ -43,6 +43,7 @@ class CartpoleParams:
 
         self.uu_a = None
         self.uu_b = None
+        self.use_linear_model = False
 
 
 class Cartpole(gym.Env):
@@ -75,7 +76,7 @@ class Cartpole(gym.Env):
                                   [-0.0580, -0.2822, -1.8709, 0.4519]])
 
         self.states_refer = None
-        self.use_linear_model = True
+        self.use_linear_model = self.params.use_linear_model
 
     def model_based_step(self, action: float):
 
@@ -84,13 +85,11 @@ class Cartpole(gym.Env):
         current_states = np.transpose([x, x_dot, theta, theta_dot])
 
         matrix_A = np.array([[1, 0.03333333, 0, 0],
-                            [0, 1, -0.0565, 0],
-                            [0, 0, 1, 0.03333333],
-                            [0, 0, 0.8980, 1]])
+                             [0, 1, -0.0565, 0],
+                             [0, 0, 1, 0.03333333],
+                             [0, 0, 0.8980, 1]])
 
         matrix_B = np.transpose([0, 0.0334, 0, -0.0783])
-
-        action *= self.params.force_mag
 
         x, x_dot, theta, theta_dot = matrix_A @ current_states + matrix_B * action
 
@@ -101,7 +100,6 @@ class Cartpole(gym.Env):
 
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
-
 
     def refer_step(self):
         x, x_dot, theta, theta_dot, _ = self.states_refer
@@ -123,7 +121,17 @@ class Cartpole(gym.Env):
         x, x_dot, theta, theta_dot, _ = self.states
 
         if self.use_linear_model:
+
+            action *= self.params.force_mag * 5
+
+            if action_mode == 'residual':
+                F = np.array([8.25691599, 6.76016534, 40.12484514, 6.84742553])
+                force_res = F[0] * x + F[1] * x_dot + F[2] * theta + F[3] * theta_dot  # residual control commands
+                action = + force_res  # RL control commands + residual control commands
+                action = np.clip(action, a_min=-25, a_max=25)
+
             x, x_dot, theta, theta_dot, failed = self.model_based_step(action)
+
         else:
             if self.params.force_input:
                 force = action * self.params.force_mag
@@ -442,7 +450,6 @@ def get_unk_unk_dis(a=None, b=None):
     uu2 *= 2.0  # [-2, 2]
 
     return uu1, uu2
-
 
 # the below is for test
 

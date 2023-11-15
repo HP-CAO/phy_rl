@@ -16,9 +16,9 @@
         "with_friction": true,
         "force_input": true,
         "ini_states": [
-            -0.60,
+            0.1,
             0.0,
-            0.7,
+            0.15,
             0.0,
             false
         ],
@@ -29,16 +29,16 @@
         "tracking_error_factor": 0,
         "lyapunov_reward_factor": 1,
         "high_performance_reward_factor": 0,
-        "action_penalty": 0.00,
+        "action_penalty": 0.0,
         "crash_penalty": 0,
         "observe_reference_states": false,
         "random_reset_train": true,
-        "random_reset_eval": false,
+        "random_reset_eval": true,
         "update_reference_model": true,
         "sparse_reset": false,
         "use_ubc_lya_reward": false,
         "add_uu_dis": true,
-        "use_linear_model": false
+        "use_linear_model": true
     },
     "agent_params": {
         "action_noise": "no",
@@ -54,25 +54,26 @@
         "total_training_steps": 1e6,
         "max_episode_steps": 1000,
         "experience_prefill_size": 128,
-        "as_residual_policy": true,
+        "as_residual_policy": false,
+        "action_mode": "residual",
         "use_taylor_nn": false,
         "taylor_editing": false
     },
     "logger_params": {
         "evaluation_period": 20,
         "model_name": "ddpg_res",
-        "visualize_eval": true,
+        "visualize_eval": false,
         "force_override": false,
         "mode": "train"
     },
     "taylor_params": {
         "dense_dims": [
-            12,
-            12
+            25,
+            25
         ],
         "aug_order": [
-            0,
-            0,
+            1,
+            1,
             0
         ],
         "initializer_w": "tn",

@@ -6,7 +6,7 @@
         "gravity": 9.8,
         "mass_cart": 0.94,
         "mass_pole": 0.23,
-        "force_mag": 50.0,
+        "force_mag": 5.0,
         "voltage_mag": 5.0,
         "length": 0.64,
         "theta_random_std": 0.8,
@@ -33,11 +33,12 @@
         "crash_penalty": 0,
         "observe_reference_states": false,
         "random_reset_train": true,
-        "random_reset_eval": false,
+        "random_reset_eval": true,
         "update_reference_model": true,
         "sparse_reset": false,
         "use_ubc_lya_reward": true,
-        "add_uu_dis": true
+        "add_uu_dis": true,
+        "use_linear_model": true
     },
     "agent_params": {
         "action_noise": "no",
@@ -54,7 +55,7 @@
         "max_episode_steps": 1000,
         "experience_prefill_size": 128,
         "as_residual_policy": false,
-        "action_mode": "residual",
+        "action_mode": "drl",
         "use_taylor_nn": false,
         "taylor_editing": false
     },
