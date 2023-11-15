@@ -57,7 +57,7 @@ plt.ylim(-1, 1)
 
 # Loading model
 params = read_config("./config/eval.json")
-model_path = "models/iclr_ubc_mb_1_best"
+model_path = "models/iclr_ubc_mb_4_best"
 
 agent_our = DDPGAgent(params.agent_params,
                       params.taylor_params,
