@@ -137,9 +137,9 @@ class Cartpole(gym.Env):
         else:
             if self.params.force_input:
                 force = action * self.params.force_mag
-            else:
-                voltage = action * self.params.voltage_mag
-                force = self.voltage2force(voltage, x_dot)
+            # else:
+            #     voltage = action * self.params.voltage_mag
+            #     force = self.voltage2force(voltage, x_dot)
 
             if action_mode == 'residual':
                 F = np.array([8.25691599, 6.76016534, 40.12484514, 6.84742553])
