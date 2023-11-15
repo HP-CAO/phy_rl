@@ -73,10 +73,35 @@ class Cartpole(gym.Env):
                                   [0.0247, 1.1204, 1.1249, 0.2339],
                                   [0, 0, 1, 0.03333333],
                                   [-0.0580, -0.2822, -1.8709, 0.4519]])
+
         self.states_refer = None
+        self.use_linear_model = True
+
+    def model_based_step(self, action: float):
+
+        x, x_dot, theta, theta_dot, _ = self.states
+
+        current_states = np.transpose([x, x_dot, theta, theta_dot])
+
+        matrix_A = np.array([[1, 0.03333333, 0, 0],
+                            [0, 1, -0.0565, 0],
+                            [0, 0, 1, 0.03333333],
+                            [0, 0, 0.8980, 1]])
+
+        matrix_B = np.transpose([0, 0.0334, 0, -0.0783])
+
+        action *= self.params.force_mag
+
+        x, x_dot, theta, theta_dot = matrix_A @ current_states + matrix_B * action
+
+        failed = self.is_failed(x, theta_dot)
+
+        new_states = [x, x_dot, theta, theta_dot, failed]
+        return new_states
 
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
+
 
     def refer_step(self):
         x, x_dot, theta, theta_dot, _ = self.states_refer
@@ -94,64 +119,68 @@ class Cartpole(gym.Env):
         param: action: a scalar value (not numpy type) [-1,1]
         return: a list of states
         """
+
         x, x_dot, theta, theta_dot, _ = self.states
 
-        if self.params.force_input:
-            force = action * self.params.force_mag
+        if self.use_linear_model:
+            x, x_dot, theta, theta_dot, failed = self.model_based_step(action)
         else:
-            voltage = action * self.params.voltage_mag
-            force = self.voltage2force(voltage, x_dot)
+            if self.params.force_input:
+                force = action * self.params.force_mag
+            else:
+                voltage = action * self.params.voltage_mag
+                force = self.voltage2force(voltage, x_dot)
 
-        if action_mode == 'residual':
-            F = np.array([8.25691599, 6.76016534, 40.12484514, 6.84742553])
-            force_res = F[0] * x + F[1] * x_dot + F[2] * theta + F[3] * theta_dot  # residual control commands
-            force = force + force_res  # RL control commands + residual control commands
+            if action_mode == 'residual':
+                F = np.array([8.25691599, 6.76016534, 40.12484514, 6.84742553])
+                force_res = F[0] * x + F[1] * x_dot + F[2] * theta + F[3] * theta_dot  # residual control commands
+                force = force + force_res  # RL control commands + residual control commands
 
-        # force = np.clip(force, a_min=-5 * self.params.force_mag, a_max=5 * self.params.force_mag)
+            # force = np.clip(force, a_min=-5 * self.params.force_mag, a_max=5 * self.params.force_mag)
 
-        costheta = math.cos(theta)
-        sintheta = math.sin(theta)
+            costheta = math.cos(theta)
+            sintheta = math.sin(theta)
 
-        # kinematics of the inverted pendulum
-        if self.params.with_friction:
-            """ with friction"""
-            temp \
-                = (force + self.pole_mass_length_half * theta_dot ** 2 *
-                   sintheta - self.params.friction_cart * x_dot) / self.total_mass
+            # kinematics of the inverted pendulum
+            if self.params.with_friction:
+                """ with friction"""
+                temp \
+                    = (force + self.pole_mass_length_half * theta_dot ** 2 *
+                       sintheta - self.params.friction_cart * x_dot) / self.total_mass
 
-            thetaacc = \
-                (self.params.gravity * sintheta - costheta * temp -
-                 self.params.friction_pole * theta_dot / self.pole_mass_length_half) / \
-                (self.half_length * (4.0 / 3.0 - self.params.mass_pole * costheta ** 2 / self.total_mass))
+                thetaacc = \
+                    (self.params.gravity * sintheta - costheta * temp -
+                     self.params.friction_pole * theta_dot / self.pole_mass_length_half) / \
+                    (self.half_length * (4.0 / 3.0 - self.params.mass_pole * costheta ** 2 / self.total_mass))
 
-            xacc = temp - self.pole_mass_length_half * thetaacc * costheta / self.total_mass
+                xacc = temp - self.pole_mass_length_half * thetaacc * costheta / self.total_mass
 
-        else:
-            """without friction"""
-            temp = (force + self.pole_mass_length_half * theta_dot ** 2 * sintheta) / self.total_mass
-            thetaacc = (self.params.gravity * sintheta - costheta * temp) / \
-                       (self.half_length * (4.0 / 3.0 - self.params.mass_pole * costheta ** 2 / self.total_mass))
-            xacc = temp - self.pole_mass_length_half * thetaacc * costheta / self.total_mass
+            else:
+                """without friction"""
+                temp = (force + self.pole_mass_length_half * theta_dot ** 2 * sintheta) / self.total_mass
+                thetaacc = (self.params.gravity * sintheta - costheta * temp) / \
+                           (self.half_length * (4.0 / 3.0 - self.params.mass_pole * costheta ** 2 / self.total_mass))
+                xacc = temp - self.pole_mass_length_half * thetaacc * costheta / self.total_mass
 
-        uu1 = 0
-        uu2 = 0
+            uu1 = 0
+            uu2 = 0
 
-        if self.params.add_uu_dis:
-            uu1, uu2 = get_unk_unk_dis(self.params.uu_a, self.params.uu_b)
+            if self.params.add_uu_dis:
+                uu1, uu2 = get_unk_unk_dis(self.params.uu_a, self.params.uu_b)
 
-        if self.params.kinematics_integrator == 'euler':
-            x = x + self.tau * x_dot
-            x_dot = x_dot + self.tau * (xacc + uu1)  # here we inject disturbances
-            theta = theta + self.tau * theta_dot
-            theta_dot = theta_dot + self.tau * (thetaacc + uu2)  # here we inject disturbances
-            failed = self.is_failed(x, theta_dot)
+            if self.params.kinematics_integrator == 'euler':
+                x = x + self.tau * x_dot
+                x_dot = x_dot + self.tau * (xacc + uu1)  # here we inject disturbances
+                theta = theta + self.tau * theta_dot
+                theta_dot = theta_dot + self.tau * (thetaacc + uu2)  # here we inject disturbances
+                failed = self.is_failed(x, theta_dot)
 
-        else:  # semi-implicit euler
-            x_dot = x_dot + self.tau * xacc
-            x = x + self.tau * x_dot
-            theta_dot = theta_dot + self.tau * thetaacc
-            theta = theta + self.tau * theta_dot
-            failed = self.is_failed(x, theta_dot)
+            else:  # semi-implicit euler
+                x_dot = x_dot + self.tau * xacc
+                x = x + self.tau * x_dot
+                theta_dot = theta_dot + self.tau * thetaacc
+                theta = theta + self.tau * theta_dot
+                failed = self.is_failed(x, theta_dot)
 
         theta_rescale = math.atan2(math.sin(theta), math.cos(theta))
         new_states = [x, x_dot, theta_rescale, theta_dot, failed]

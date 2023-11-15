@@ -158,7 +158,9 @@ class CartpoleDDPG:
             mean_critic_loss = np.mean(critic_loss_list)
 
             self.logger.log_training_data(mean_reward, mean_distance_score, mean_critic_loss, failed, global_steps)
-            print( f"Training at {ep} episodes: average_reward: {mean_reward:.6}, distance_score: {mean_distance_score:.6}, "
+
+            print(
+                f"Training at {ep} episodes: average_reward: {mean_reward:.6}, distance_score: {mean_distance_score:.6}, "
                 f"critic_loss: {mean_critic_loss:.6}, total_steps_ep: {ep_steps} ")
 
             if ep % self.params.logger_params.evaluation_period == 0:
