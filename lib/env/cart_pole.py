@@ -122,19 +122,21 @@ class Cartpole(gym.Env):
 
         if self.use_linear_model:
 
-            action *= self.params.force_mag * 5
+            action *= self.params.force_mag
 
             if action_mode == 'residual':
                 F = np.array([8.25691599, 6.76016534, 40.12484514, 6.84742553])
                 force_res = F[0] * x + F[1] * x_dot + F[2] * theta + F[3] * theta_dot  # residual control commands
-                action = + force_res  # RL control commands + residual control commands
+                action += force_res  # RL control commands + residual control commands
                 action = np.clip(action, a_min=-25, a_max=25)
-
-            x, x_dot, theta, theta_dot, failed = self.model_based_step(action)
+                x, x_dot, theta, theta_dot, failed = self.model_based_step(action)
+            else:
+                action *= 5
+                x, x_dot, theta, theta_dot, failed = self.model_based_step(action)
 
         else:
             if self.params.force_input:
-                force = action * self.params.force_mag * 5
+                force = action * self.params.force_mag
             else:
                 voltage = action * self.params.voltage_mag
                 force = self.voltage2force(voltage, x_dot)
@@ -143,8 +145,10 @@ class Cartpole(gym.Env):
                 F = np.array([8.25691599, 6.76016534, 40.12484514, 6.84742553])
                 force_res = F[0] * x + F[1] * x_dot + F[2] * theta + F[3] * theta_dot  # residual control commands
                 force = force + force_res  # RL control commands + residual control commands
+            else:
+                force *= 5
 
-            force = np.clip(force, a_min=-5 * self.params.force_mag, a_max=5 * self.params.force_mag)
+            force = np.clip(force, a_min=-25, a_max=25)
 
             costheta = math.cos(theta)
             sintheta = math.sin(theta)
