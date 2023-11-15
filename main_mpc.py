@@ -10,5 +10,5 @@ i = 1
 
 for i in range(10000):
     i += 1
-    a1.step(actions, action_mode="mpc")
+    s = a1.step(actions, action_mode="mpc")
     print(a1.get_states_vector())

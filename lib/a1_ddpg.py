@@ -49,7 +49,7 @@ class A1DDPG:
         observations_next = self.a1.get_tracking_error()
 
         r = self.a1.get_reward()
-        # print("reward:", r)
+
         return observations, action, observations_next, terminal, r, abort
 
     def evaluation(self, reset_states=None, mode=None):

@@ -1,6 +1,6 @@
-# Python Environments for Inverted pendulum
+# Python Environments for Inverted pendulum and Unitree A1 Robot
 
-
+## Python Environments for Inverted pendulum
 ## Installation
 
 ### Environment
@@ -47,7 +47,7 @@ python main.py --config {PATH_TO_CONFIG_FILE} --mode {train|test} --id {RUN_NAME
 ```
 
 
-# Python Environments for Unitree A1 Robot
+## Python Environments for Unitree A1 Robot
 
 This is the simulated environment and real-robot interface for the A1 robot. The codebase can be installed directly as a PIP package, or cloned for further configurations.
 
