@@ -68,6 +68,8 @@ agent_our = DDPGAgent(params.agent_params,
 
 env = Cartpole(params.cartpole_params)
 print(params.cartpole_params.use_linear_model)
+env.params.add_uu_dis = False
+
 trajectory = []
 tx_list = []
 
@@ -117,4 +119,4 @@ plt.xticks(fontsize=16)
 plt.yticks(fontsize=16)
 plt.xlabel(r'$x$', fontsize=20)
 plt.ylabel(r"${\Theta}$", fontsize=20)
-fig1.savefig(f'plot/safety_ubc_mbrl.pdf', format='pdf', bbox_inches='tight')
+fig1.savefig(f'plot/safety_ubc_mbrl_no_dis.pdf', format='pdf', bbox_inches='tight')

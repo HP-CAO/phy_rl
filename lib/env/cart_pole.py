@@ -134,7 +134,7 @@ class Cartpole(gym.Env):
 
         else:
             if self.params.force_input:
-                force = action * self.params.force_mag
+                force = action * self.params.force_mag * 5
             else:
                 voltage = action * self.params.voltage_mag
                 force = self.voltage2force(voltage, x_dot)
@@ -144,7 +144,7 @@ class Cartpole(gym.Env):
                 force_res = F[0] * x + F[1] * x_dot + F[2] * theta + F[3] * theta_dot  # residual control commands
                 force = force + force_res  # RL control commands + residual control commands
 
-            # force = np.clip(force, a_min=-5 * self.params.force_mag, a_max=5 * self.params.force_mag)
+            force = np.clip(force, a_min=-5 * self.params.force_mag, a_max=5 * self.params.force_mag)
 
             costheta = math.cos(theta)
             sintheta = math.sin(theta)

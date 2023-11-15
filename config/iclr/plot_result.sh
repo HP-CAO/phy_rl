@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 
+python ./test/test_safety_envelope_mbrl.py
+python ./test/test_safety_envelope_mbrl_no_dis.py
+python ./test/test_safety_envelope_mbrl_our.py
 
-python main_ips.py --config ./config/iclr_mb.json --id ubc_mb_1 --mode train --force &
-python main_ips.py --config ./config/iclr_mb.json --id ubc_mb_2 --mode train --force &
-python main_ips.py --config ./config/iclr_mb_our.json --id mb_our_1 --mode train --force &
-python main_ips.py --config ./config/iclr_mb_our.json --id mb_our_2 --mode train --force
+
