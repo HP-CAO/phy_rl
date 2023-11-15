@@ -1,3 +1,6 @@
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import numpy as np
 from numpy.linalg import inv
 from numpy import linalg as LA
@@ -7,9 +10,7 @@ from tqdm import tqdm
 import copy
 from lib.agent.ddpg import DDPGAgent, DDPGParams
 from lib.env.cart_pole import CartpoleParams, Cartpole, states2observations
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
