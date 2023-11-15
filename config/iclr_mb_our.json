@@ -38,7 +38,9 @@
         "sparse_reset": false,
         "use_ubc_lya_reward": false,
         "add_uu_dis": true,
-        "use_linear_model": true
+        "use_linear_model": true,
+        "uu_a": null,
+        "uu_b": null
     },
     "agent_params": {
         "action_noise": "no",
