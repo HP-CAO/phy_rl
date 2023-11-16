@@ -57,7 +57,7 @@ plt.ylim(-1, 1)
 
 # Loading model
 params = read_config("./config/eval.json")
-model_path = "models/iclr_mb_ubc_50k_best"
+model_path = "models/iclr_mb_ubc_75k_best"
 
 agent_our = DDPGAgent(params.agent_params,
                       params.taylor_params,
@@ -117,4 +117,4 @@ plt.xticks(fontsize=16)
 plt.yticks(fontsize=16)
 plt.xlabel(r'$x$', fontsize=20)
 plt.ylabel(r"${\Theta}$", fontsize=20)
-fig1.savefig(f'plot/iclr_mb_50k_ubc.pdf', format='pdf', bbox_inches='tight')
+fig1.savefig(f'plot/iclr_mb_75k_ubc.pdf', format='pdf', bbox_inches='tight')
