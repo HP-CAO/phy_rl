@@ -57,7 +57,7 @@ plt.ylim(-1, 1)
 
 # Loading model
 params = read_config("./config/eval.json")
-model_path = "models/iclr_mb_our_4_best"
+model_path = "models/iclr_mb_ubc_best"
 
 agent_our = DDPGAgent(params.agent_params,
                       params.taylor_params,
@@ -95,7 +95,7 @@ def interact_loop(x_t, theta_t, ai_agent):
         trajectory.append(current_states)
         observations, _ = states2observations(current_states)
         action = ai_agent.get_action(observations, mode="test")
-        env.step(action, action_mode='residual')
+        env.step(action, action_mode='drl')
 
     tx_array = np.array(tx_list)
     position_array = np.abs(position_list)
@@ -117,4 +117,4 @@ plt.xticks(fontsize=16)
 plt.yticks(fontsize=16)
 plt.xlabel(r'$x$', fontsize=20)
 plt.ylabel(r"${\Theta}$", fontsize=20)
-fig1.savefig(f'plot/safety_mbrl_our.pdf', format='pdf', bbox_inches='tight')
+fig1.savefig(f'plot/iclr_mb_ubc.pdf', format='pdf', bbox_inches='tight')
