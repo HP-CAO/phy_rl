@@ -129,7 +129,6 @@ class Cartpole(gym.Env):
                 force_res = F[0] * x + F[1] * x_dot + F[2] * theta + F[3] * theta_dot  # residual control commands
                 action += force_res  # RL control commands + residual control commands
                 action = np.clip(action, a_min=-15, a_max=15)
-                print(action)
                 x, x_dot, theta, theta_dot, failed = self.model_based_step(action)
             else:
                 action *= 3
