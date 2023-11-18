@@ -417,7 +417,6 @@ class A1Robot:
         return _, termination, abort
 
     def step_linear(self, action):
-        print(self.states_vector)
         self.previous_tracking_error = self.get_tracking_error(self.states_vector)
         matrixA = np.eye(12) + 0.001 * np.array([[0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, ],
                                                [0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, ],
