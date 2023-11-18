@@ -138,6 +138,7 @@ class CartpoleDDPG:
                 self.replay_mem.add((observations, action, r, observations_next, failed))
 
                 reward_list.append(r)
+
                 distance_score_list.append(distance_score)
 
                 if self.replay_mem.get_size() > self.params.agent_params.experience_prefill_size:

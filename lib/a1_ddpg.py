@@ -40,13 +40,15 @@ class A1DDPG:
     def interaction_step(self, mode=None):
 
         # observations = copy.deepcopy(self.a1.observation)
-        observations = copy.deepcopy(self.a1.get_tracking_error())
+        observations = copy.deepcopy(self.a1.previous_tracking_error)
 
         action = self.agent.get_action(observations, mode)
 
         _, terminal, abort = self.a1.step(action, action_mode=self.params.agent_params.action_mode)
 
-        observations_next = self.a1.get_tracking_error()
+        # observations_next = self.a1.get_tracking_error()
+
+        observations_next = copy.deepcopy(self.a1.current_tracking_error)
 
         r = self.a1.get_reward()
 

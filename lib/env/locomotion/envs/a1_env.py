@@ -108,6 +108,7 @@ class A1Params:
         self.if_record_video = False
         self.action_magnitude = 1
         self.reward_type = 'velocity'
+        self.if_use_linear_model = False
 
 
 class A1Robot:
@@ -135,6 +136,7 @@ class A1Robot:
         self.diff_dq = None
         self.current_step = 0
         self.previous_tracking_error = None
+        self.current_tracking_error = None
         self.initialize_env()
         self.states_vector = []
         self.height_vector = []
@@ -175,6 +177,8 @@ class A1Robot:
         self.previous_tracking_error = self.get_tracking_error()
         self.observation, self.termination, _ = self.get_observations(self.states)
         self.current_step = 0
+        self.if_use_linaer_model = self.params.if_use_linear_model
+        self.states_vector = np.array([0, 0, 0.24, 0., 0., 0., 0, 0., 0., 0., 0., 0.])  # initial_state
 
     def get_observations(self, state):
         observation = []  # 16 dims
@@ -213,9 +217,9 @@ class A1Robot:
         velocity_in_body_frame = state["base_vels_body_frame"]
         observation.extend(velocity_in_body_frame)
 
-        # if abs(roll) > angle_threshold or abs(pitch) > angle_threshold:
-        #     print("roll", roll, "pitch", pitch)
-        #     termination = True
+        if abs(roll) > angle_threshold or abs(pitch) > angle_threshold:
+            print("roll", roll, "pitch", pitch)
+            termination = True
 
         confall = self.mpc_control.stance_leg_controller.estimate_robot_x_y_z()
 
@@ -254,7 +258,7 @@ class A1Robot:
         # states_vector = np.hstack((angle, com_position_xyz, base_rpy_rate, com_velocity))
         return states_vector
 
-    def get_tracking_error(self):  # this is used for computing reward
+    def get_tracking_error(self, states_vector=None):  # this is used for computing reward
         # reference_vx = 1.0
         reference_vx = -1.3
         reference_p_z = 0.24
@@ -262,7 +266,10 @@ class A1Robot:
 
         reference_vector = np.array([0, 0, reference_p_z, 0., 0., 0., reference_vx, 0., 0., 0., 0., 0.])
 
-        states_vector_robot = self.get_states_vector()
+        if states_vector is None:
+            states_vector_robot = self.get_states_vector()
+        else:
+            states_vector_robot = states_vector
         tracking_error = states_vector_robot - reference_vector
         return tracking_error
 
@@ -297,42 +304,42 @@ class A1Robot:
         #
         # p_matrix = np.diag(p_vector)
 
-        p_matrix = [[1.600000e-02, 0.000000e+00, 2.300000e-02, 0.000000e+00, 0.000000e+00,
-                     1.020000e-01, 3.000000e-03, 0.000000e+00, -2.110000e-01, 0.000000e+00,
-                     0.000000e+00, 2.000000e-03],
-                    [0.000000e+00, 1.500000e-02, 1.000000e-03, 0.000000e+00, 0.000000e+00,
-                     2.000000e-03, 0.000000e+00, 1.000000e-03, -8.000000e-03, 0.000000e+00,
-                     -0.000000e+00, 0.000000e+00],
-                    [2.300000e-02, 1.000000e-03, 2.263550e+02, 7.800000e-02, 8.200000e-02,
-                     5.520600e+01, 1.700000e-02, 3.000000e-03, -3.141630e+02, 6.000000e-03,
-                     3.000000e-03, 1.249000e+00],
-                    [0.000000e+00, 0.000000e+00, 7.800000e-02, 6.410000e-01, -1.000000e-03,
-                     1.180000e-01, -0.000000e+00, -0.000000e+00, -7.300000e-01, 4.200000e-02,
-                     -0.000000e+00, 3.000000e-03],
-                    [0.000000e+00, 0.000000e+00, 8.200000e-02, -1.000000e-03, 6.380000e-01,
-                     1.250000e-01, 0.000000e+00, -0.000000e+00, -7.890000e-01, -0.000000e+00,
-                     4.200000e-02, 3.000000e-03],
-                    [1.020000e-01, 2.000000e-03, 5.520600e+01, 1.180000e-01, 1.250000e-01,
-                     2.478030e+02, 4.500000e-02, 3.000000e-03, -4.836810e+02, 4.000000e-03,
-                     3.000000e-03, 5.547000e+00],
-                    [3.000000e-03, 0.000000e+00, 1.700000e-02, -0.000000e+00, 0.000000e+00,
-                     4.500000e-02, 1.065000e+00, 0.000000e+00, -1.680000e-01, -0.000000e+00,
-                     0.000000e+00, 0.000000e+00],
-                    [0.000000e+00, 1.000000e-03, 3.000000e-03, -0.000000e+00, -0.000000e+00,
-                     3.000000e-03, 0.000000e+00, 3.000000e-02, -2.100000e-02, -0.000000e+00,
-                     -0.000000e+00, 0.000000e+00],
-                    [-2.110000e-01, -8.000000e-03, -3.141630e+02, -7.300000e-01, -7.890000e-01,
-                     -4.836810e+02, -1.680000e-01, -2.100000e-02, 3.229212e+03, -4.900000e-02,
-                     -1.800000e-02, -1.090100e+01],
-                    [0.000000e+00, 0.000000e+00, 6.000000e-03, 4.200000e-02, -0.000000e+00,
-                     4.000000e-03, -0.000000e+00, -0.000000e+00, -4.900000e-02, 1.700000e-02,
-                     -0.000000e+00, 0.000000e+00],
-                    [0.000000e+00, -0.000000e+00, 3.000000e-03, -0.000000e+00, 4.200000e-02,
-                     3.000000e-03, 0.000000e+00, -0.000000e+00, -1.800000e-02, -0.000000e+00,
-                     1.700000e-02, 0.000000e+00],
-                    [2.000000e-03, 0.000000e+00, 1.249000e+00, 3.000000e-03, 3.000000e-03,
-                     5.547000e+00, 0.000000e+00, 0.000000e+00, -1.090100e+01, 0.000000e+00,
-                     0.000000e+00, 1.690000e-01]]
+        p_matrix = np.array([[1.600000e-02, 0.000000e+00, 2.300000e-02, 0.000000e+00, 0.000000e+00,
+                              1.020000e-01, 3.000000e-03, 0.000000e+00, -2.110000e-01, 0.000000e+00,
+                              0.000000e+00, 2.000000e-03],
+                             [0.000000e+00, 1.500000e-02, 1.000000e-03, 0.000000e+00, 0.000000e+00,
+                              2.000000e-03, 0.000000e+00, 1.000000e-03, -8.000000e-03, 0.000000e+00,
+                              -0.000000e+00, 0.000000e+00],
+                             [2.300000e-02, 1.000000e-03, 2.263550e+02, 7.800000e-02, 8.200000e-02,
+                              5.520600e+01, 1.700000e-02, 3.000000e-03, -3.141630e+02, 6.000000e-03,
+                              3.000000e-03, 1.249000e+00],
+                             [0.000000e+00, 0.000000e+00, 7.800000e-02, 6.410000e-01, -1.000000e-03,
+                              1.180000e-01, -0.000000e+00, -0.000000e+00, -7.300000e-01, 4.200000e-02,
+                              -0.000000e+00, 3.000000e-03],
+                             [0.000000e+00, 0.000000e+00, 8.200000e-02, -1.000000e-03, 6.380000e-01,
+                              1.250000e-01, 0.000000e+00, -0.000000e+00, -7.890000e-01, -0.000000e+00,
+                              4.200000e-02, 3.000000e-03],
+                             [1.020000e-01, 2.000000e-03, 5.520600e+01, 1.180000e-01, 1.250000e-01,
+                              2.478030e+02, 4.500000e-02, 3.000000e-03, -4.836810e+02, 4.000000e-03,
+                              3.000000e-03, 5.547000e+00],
+                             [3.000000e-03, 0.000000e+00, 1.700000e-02, -0.000000e+00, 0.000000e+00,
+                              4.500000e-02, 1.065000e+00, 0.000000e+00, -1.680000e-01, -0.000000e+00,
+                              0.000000e+00, 0.000000e+00],
+                             [0.000000e+00, 1.000000e-03, 3.000000e-03, -0.000000e+00, -0.000000e+00,
+                              3.000000e-03, 0.000000e+00, 3.000000e-02, -2.100000e-02, -0.000000e+00,
+                              -0.000000e+00, 0.000000e+00],
+                             [-2.110000e-01, -8.000000e-03, -3.141630e+02, -7.300000e-01, -7.890000e-01,
+                              -4.836810e+02, -1.680000e-01, -2.100000e-02, 3.229212e+03, -4.900000e-02,
+                              -1.800000e-02, -1.090100e+01],
+                             [0.000000e+00, 0.000000e+00, 6.000000e-03, 4.200000e-02, -0.000000e+00,
+                              4.000000e-03, -0.000000e+00, -0.000000e+00, -4.900000e-02, 1.700000e-02,
+                              -0.000000e+00, 0.000000e+00],
+                             [0.000000e+00, -0.000000e+00, 3.000000e-03, -0.000000e+00, 4.200000e-02,
+                              3.000000e-03, 0.000000e+00, -0.000000e+00, -1.800000e-02, -0.000000e+00,
+                              1.700000e-02, 0.000000e+00],
+                             [2.000000e-03, 0.000000e+00, 1.249000e+00, 3.000000e-03, 3.000000e-03,
+                              5.547000e+00, 0.000000e+00, 0.000000e+00, -1.090100e+01, 0.000000e+00,
+                              0.000000e+00, 1.690000e-01]])
 
         M_matrix = np.array([[6.33931716274651, 0, 0, 0, 0, 0, 0.39824214223179, 0, 0, 0, 0, 0],
                              [0, 1.40521824475728, 0, 0, 0, 0, 0, 0.286679284833682, 0, 0, 0, 0],
@@ -347,15 +354,13 @@ class A1Robot:
                              [0, 0, 0, 0, 9.01777538552449, 0, 0, 0, 0, 0, 1.8592311555769, 0],
                              [0, 0, 0, 0, 0, 0.286679284833682, 0, 0, 0, 0, 0, 72.6131010296885]]) * 1
 
-        tracking_error_current = self.get_tracking_error()
-        tracking_error_current = np.expand_dims(tracking_error_current, axis=-1)
+        tracking_error_current = np.expand_dims(self.current_tracking_error, axis=-1)
         tracking_error_pre = self.previous_tracking_error
         tracking_error_pre = np.expand_dims(tracking_error_pre, axis=-1)
+        ly_reward_cur = np.transpose(tracking_error_current) @ p_matrix @ tracking_error_current
+        # ly_reward_pre = np.transpose(tracking_error_pre, axes=(1, 0)) @ M_matrix @ tracking_error_pre
 
-        ly_reward_cur = np.transpose(tracking_error_current, axes=(1, 0)) @ p_matrix @ tracking_error_current
-        ly_reward_pre = np.transpose(tracking_error_pre, axes=(1, 0)) @ M_matrix @ tracking_error_pre
-
-        # ly_reward_pre = np.transpose(tracking_error_pre, axes=(1, 0)) @ p_matrix @ tracking_error_pre
+        ly_reward_pre = np.transpose(tracking_error_pre, axes=(1, 0)) @ p_matrix @ tracking_error_pre
 
         reward = ((ly_reward_pre - ly_reward_cur) * 0.01)
 
@@ -364,7 +369,13 @@ class A1Robot:
     def initialize_env(self):
         self.reset(step=0)
 
-    def step(self, action, action_mode='mpc'):
+    def step(self, action, action_mode=None):
+        if self.params.if_use_linear_model:
+            return self.step_linear(action)
+        else:
+            return self.step_true_mdp(action, action_mode)
+
+    def step_true_mdp(self, action, action_mode='mpc'):
         """
         Here the action is generated from DRL agent, that controls ground reaction force (GRF).
         dim: 12, 3 dims (motors) for each leg action is in [-1,1]
@@ -398,11 +409,60 @@ class A1Robot:
         self.states = state  # update the states buffer
         self.observation = observation
         self.termination = termination
+        self.current_tracking_error = self.get_tracking_error()
         self.states_vector.append(self.states["base_vels_body_frame"][0])
         self.height_vector.append(self.mpc_control.stance_leg_controller.estimate_robot_x_y_z()[-1])
 
         self.current_step += 1
-        return observation, termination, abort
+        return _, termination, abort
+
+    def step_linear(self, action):
+        print(self.states_vector)
+        self.previous_tracking_error = self.get_tracking_error(self.states_vector)
+        matrixA = np.eye(12) + 0.001 * np.array([[0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, ],
+                                               [0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, ],
+                                               [0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, ],
+                                               [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, ],
+                                               [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, ],
+                                               [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, ],
+                                               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ],
+                                               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ],
+                                               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ],
+                                               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ],
+                                               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ],
+                                               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ]])
+
+        matrixB = 0.001 * np.array([[0, 0, 0, 0, 0, 0],
+                            [0, 0, 0, 0, 0, 0],
+                            [0, 0, 0, 0, 0, 0],
+                            [0, 0, 0, 0, 0, 0],
+                            [0, 0, 0, 0, 0, 0],
+                            [0, 0, 0, 0, 0, 0],
+                            [1, 1, 1, 0, 0, 0],
+                            [1, 1, 1, 0, 0, 0],
+                            [1, 1, 1, 0, 0, 0],
+                            [0, 0, 0, 1, 1, 1],
+                            [0, 0, 0, 1, 1, 1],
+                            [0, 0, 0, 1, 1, 1]])
+
+        states = self.states_vector
+        new_states = matrixA @ np.transpose(states) + matrixB @ np.transpose(action)
+        self.states_vector = new_states
+        termination = False
+        fall_threshold = 0.12
+        angle_threshold = 30 * (math.pi / 180)
+
+        if abs(self.states_vector[2]) < fall_threshold:
+            print("Fall: height:", self.states_vector[2])
+            termination = True
+
+        if abs(self.states_vector[3]) > angle_threshold or abs(self.states_vector[5]) > angle_threshold:
+            print("roll", self.states_vector[3], "pitch", self.states_vector[5])
+            termination = True
+
+        self.current_tracking_error = self.get_tracking_error(self.states_vector)
+
+        return self.states_vector, termination, False
 
     def get_performance_score(self):
         pass
