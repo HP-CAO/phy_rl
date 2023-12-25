@@ -81,15 +81,15 @@ class CartpoleDDPG:
 
         for step in range(self.params.agent_params.max_episode_steps):
 
+            if mode == 'test':
+                trajectory_tensor.append(self.cartpole.states[:4])
+                reference_trajectory_tensor.append(self.cartpole.states_refer[:4])
+
             observations, action, observations_next, failed, r, distance_score = \
                 self.interaction_step(mode='eval')
 
             if self.params.logger_params.visualize_eval:
                 self.cartpole.render()
-
-            if mode == 'test':
-                trajectory_tensor.append(self.cartpole.states[:4])
-                reference_trajectory_tensor.append(self.cartpole.states_refer[:4])
 
             reward_list.append(r)
             distance_score_list.append(distance_score)
@@ -171,7 +171,10 @@ class CartpoleDDPG:
                 if moving_average_dsas > best_dsas:
                     self.agent.save_weights(self.logger.model_dir + '_best')
                     best_dsas = moving_average_dsas
+
             self.agent.save_weights(self.logger.model_dir)
+
+        np.savetxt("reward_list", self.cartpole.reward_list)
 
     def test(self):
         self.evaluation(mode='test', reset_states=self.params.cartpole_params.ini_states)
