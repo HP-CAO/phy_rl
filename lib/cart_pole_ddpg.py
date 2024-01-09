@@ -94,8 +94,8 @@ class CartpoleDDPG:
             reward_list.append(r)
             distance_score_list.append(distance_score)
 
-            if failed:
-                break
+            # if failed:
+            #     break
 
         mean_reward = np.mean(reward_list)
         mean_distance_score = np.mean(distance_score_list)
