@@ -4,6 +4,7 @@ import pybullet_data
 from pybullet_utils import bullet_client
 import pybullet  # pytype:disable=import-error
 import math
+import copy
 
 from lib.env.locomotion.agents.whole_body_controller import com_velocity_estimator
 from lib.env.locomotion.agents.whole_body_controller import gait_generator as gait_generator_lib
@@ -100,7 +101,7 @@ def _generate_example_linear_angular_speed(t):
 
 class A1Params:
     def __init__(self):
-        self.show_gui = False
+        self.show_gui = True
         self.time_step = 0.002  # 1 / control frequency
         self.if_add_terrain = False
         self.random_reset_eval = False
@@ -129,8 +130,7 @@ class A1Robot:
         self.termination = None
         self.states = None
         self.observation = None
-        # self.target_lin_speed = [1.0, 0, 0]
-        self.target_lin_speed = [-1.3, 0, 0]
+        self.target_lin_speed = [0.5, 0, 0]
         self.target_ang_speed = 0.0
         self.diff_q = None
         self.diff_dq = None
@@ -154,8 +154,6 @@ class A1Robot:
         self.p.setAdditionalSearchPath(pybullet_data.getDataPath())
         plane = self.p.loadURDF("./lib/env/locomotion/envs/meshes/plane.urdf")
 
-        # self.p.changeDynamics(plane, -1, lateralFriction=0.575)  # change friction from higher to lower
-        # self.p.changeDynamics(plane, -1, lateralFriction=0.44)  # change friction from higher to lower
         self.p.changeDynamics(plane, -1, lateralFriction=0.6)  # change friction from higher to lower
 
         if self.params.if_record_video:
@@ -180,6 +178,42 @@ class A1Robot:
         self.if_use_linaer_model = self.params.if_use_linear_model
         self.states_vector = np.array([0, 0, 0.24, 0., 0., 0., 0, 0., 0., 0., 0., 0.])  # initial_state
 
+    def get_vision_observations(self, return_label=False):
+        rot_pos, rot_orn = self.p.getBasePositionAndOrientation(self.robot.quadruped)
+
+        proj_mat = [
+            1.0825318098068237, 0.0, 0.0, 0.0, 0.0, 1.732050895690918, 0.0, 0.0, 0.0, 0.0,
+            -1.0002000331878662, -1.0, 0.0, 0.0, -0.020002000033855438, 0.0
+        ]
+
+        rot_mat = self.p.getMatrixFromQuaternion(rot_orn)
+        forward_vec = [rot_mat[0], rot_mat[3], rot_mat[6]]
+        cam_pos = [rot_pos[i] + forward_vec[i] * 0.239 for i in range(3)]
+        cam_orn = copy.deepcopy(rot_orn)
+        forward_vec2 = [rot_mat[0], rot_mat[3], rot_mat[6]]
+        cam_up_vec = [rot_mat[2], rot_mat[5], rot_mat[8]]
+
+        cam_target = [cam_pos[i] + forward_vec2[i] * 10 for i in range(3)]
+
+        view_mat2 = self.p.computeViewMatrix(cam_pos, cam_target, cam_up_vec)
+
+        camera_image_set = self.p.getCameraImage(
+            80, 80, viewMatrix=view_mat2, projectionMatrix=proj_mat,
+            # flags=pybullet.ER_NO_SEGMENTATION_MASK,
+            shadow=1,
+            lightDirection=[1, 1, 1],
+            renderer=pybullet.ER_BULLET_HARDWARE_OPENGL,
+            flags=self.p.ER_SEGMENTATION_MASK_OBJECT_AND_LINKINDEX
+        )
+
+        _, _, rgb, depth, seg = camera_image_set
+
+        if return_label:
+            info = {"cam_pos": cam_pos, "cam_orn": cam_orn, "rot_pos": rot_pos, "rot_orn": rot_orn}
+        else:
+            info = None
+
+        return rgb, depth, seg, info
     def get_observations(self, state):
         observation = []  # 16 dims
         roll, pitch, _ = state['base_rpy']
@@ -299,11 +333,6 @@ class A1Robot:
 
     def get_ly_reward(self):
 
-        # p_vector = [0, 0, 0, 0, 0, 0, 1.81666331e-04, 1.81892955e-04,
-        #             1.87235756e-04, 1, 1.88585412e-04, 1.88390268e-04]
-        #
-        # p_matrix = np.diag(p_vector)
-
         p_matrix = np.array([[1.600000e-02, 0.000000e+00, 2.300000e-02, 0.000000e+00, 0.000000e+00,
                               1.020000e-01, 3.000000e-03, 0.000000e+00, -2.110000e-01, 0.000000e+00,
                               0.000000e+00, 2.000000e-03],
@@ -358,7 +387,6 @@ class A1Robot:
         tracking_error_pre = self.previous_tracking_error
         tracking_error_pre = np.expand_dims(tracking_error_pre, axis=-1)
         ly_reward_cur = np.transpose(tracking_error_current) @ p_matrix @ tracking_error_current
-        # ly_reward_pre = np.transpose(tracking_error_pre, axes=(1, 0)) @ M_matrix @ tracking_error_pre
 
         ly_reward_pre = np.transpose(tracking_error_pre, axes=(1, 0)) @ p_matrix @ tracking_error_pre
 

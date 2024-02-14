@@ -34,25 +34,27 @@ class A1DDPG:
                                shape_action=self.shape_action,
                                model_path=self.params.agent_params.model_path,
                                mode=self.params.logger_params.mode)
+        self.step_counter = 0
 
         self.logger = Logger(self.params.logger_params)
 
     def interaction_step(self, mode=None):
 
-        # observations = copy.deepcopy(self.a1.observation)
         observations = copy.deepcopy(self.a1.previous_tracking_error)
-
+        rgb, _, _, _ = self.a1.get_vision_observations()
+        rgb = np.array(rgb)[:, :, :3]
         action = self.agent.get_action(observations, mode)
-
         _, terminal, abort = self.a1.step(action, action_mode=self.params.agent_params.action_mode)
-
-        # observations_next = self.a1.get_tracking_error()
-
         observations_next = copy.deepcopy(self.a1.current_tracking_error)
-
+        rgb_next, _, _, _ = self.a1.get_vision_observations()
+        rgb_next = np.array(rgb_next)[:, :, :3]
         r = self.a1.get_reward()
 
-        return observations, action, observations_next, terminal, r, abort
+
+        self.step_counter += 1
+
+
+        return observations, action, observations_next, terminal, r, abort, rgb.flatten(), rgb_next.flatten()
 
     def evaluation(self, reset_states=None, mode=None):
 
@@ -127,15 +129,13 @@ class A1DDPG:
 
             for step in range(self.params.agent_params.max_episode_steps):
 
-                observations, action, observations_next, failed, r, abort = \
+                observations, action, observations_next, failed, r, abort, rgb, rgb_next = \
                     self.interaction_step(mode='train')
 
                 if abort:
                     break
 
-                self.replay_mem.add((observations, action, r, observations_next, failed))
-
-                reward_list.append(r)
+                self.replay_mem.add((observations, action, r, observations_next, failed, rgb, rgb_next))
 
                 if self.replay_mem.get_size() > self.params.agent_params.experience_prefill_size:
                     minibatch = self.replay_mem.sample(self.params.agent_params.batch_size)

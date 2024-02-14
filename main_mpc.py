@@ -12,4 +12,5 @@ i = 1
 for i in range(int(2e8)):
     i += 1
     s = a1.step(actions, action_mode="mpc")
+    a1.get_vision_observations()
     print(a1.get_states_vector())
