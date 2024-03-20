@@ -1,24 +1,35 @@
-# Python Environments for Inverted pendulum and Unitree A1 Robot
+<!-- PROJECT LOGO -->
+<br />
+<p align="center">
+  <h1 align="center"> Physics-regulated Deep Reinforcement Learning: Invariant Embeddings </h1>
+  <p align="center">
+    <img src="diagram.png" alt="Logo" width="90%"><br />
+  </p>
 
-## Python Environments for Inverted pendulum
-## Installation
+# Phy-DRL
+
+This paper proposes the Phy-DRL: a physics-regulated deep reinforcement learning (DRL) framework for safety-critical autonomous systems. The Phy-DRL has three distinguished invariant-embedding designs: i) residual action policy (i.e., integrating data-driven-DRL action policy and physics-model-based action policy), ii) (automatically construct) safety-embedded reward, and iii) physics-model-guided neural network (NN) editing, including link editing and activation editing. Theoretically, the Phy-DRL exhibits 1) mathematically-provable safety guarantee, and 2) strict compliance of critic and actor networks with physics knowledge about the action-value function and action policy. Finally, we evaluate the Phy-DRL on a cart-pole system and a quadruped robot. The experiments validate our theoretical results and demonstrate that Phy-DRL features guaranteed safety compared to purely data-driven DRL and solely model-based design, while offering remarkably fewer learning parameters and fast training towards safety guarantee.
 
 ### Environment
 This project is using the following settings:
 
 - Ubuntu: 20.04 
-- python: >3.6.5 
+- python: 3.8
 
-### Package
+### Package in python
 
 ```
 pip install -r requirement.txt
 ```
 
-## Run
+### Package in Matlab
+
+Download and install[CVX](http://cvxr.com/cvx/) package.
+
+## Run experiments for Inverted pendulum
 
 ```
-main_ddpg.py [-h] [--config CONFIG] [--generate_config] [--force]
+main_ips.py [-h] [--config CONFIG] [--generate_config] [--force]
                   [--params [PARAMS [PARAMS ...]]] [--mode MODE]
                   [--gpu] [--id RUN_ID][--weights PATH_TO_WEIGHTS] 
 
@@ -37,134 +48,165 @@ arguments:
 Example_1: Generate configuration file
 
 ```
-python main.py --generate_config
+python main_ips.py --generate_config
 ```
 
 Example_2: Training/Testing
 
 ```
-python main.py --config {PATH_TO_CONFIG_FILE} --mode {train|test} --id {RUN_NAME} --gpu --weights {PATH_TO_PRETRAINED_WEIGHTS}
+python main_ips.py --config {PATH_TO_CONFIG_FILE} --mode {train|test} --id {RUN_NAME} --gpu --weights {PATH_TO_PRETRAINED_WEIGHTS}
 ```
 
-
-## Python Environments for Unitree A1 Robot
-
-This is the simulated environment and real-robot interface for the A1 robot. The codebase can be installed directly as a PIP package, or cloned for further configurations.
-
-The codebase also includes a whole-body controller that can walk the robot in both simulation and real world.
-
-## Getting started
-To start, just clone the codebase, and install the dependencies using
-```bash
-pip install -r requirements.txt
-```
-
-Then, you can explore the environments by running:
-```bash
-python -m locomotion.examples.test_env_gui \
---robot_type=A1 \
---motor_control_mode=Position \
---on_rack=True
-```
-
-The three commandline flags are:
-
-`robot_type`: choose between `A1` and `Laikago` for different robot.
-
-`motor_control_mode`: choose between `Position` ,`Torque` for different motor control modes.
-
-`on_rack`: whether to fix the robot's base on a rack. Setting `on_rack=True` is handy for debugging visualizing open-loop gaits.
-
-## The gym interface
-Additionally, the codebase can be directly installed as a pip package. Just run:
-```bash
-pip install git+https://github.com/yxyang/locomotion_simulation@master#egg=locomotion_simulation
-```
-
-Then, you can directly invoke the default gym environment in Python:
-```python
-import gym
-env = gym.make('locomotion:A1GymEnv-v1')
-```
-
-Note that the pybullet rendering is slightly different from Mujoco. To enable GUI rendering and visualize the training process, you can call:
-
-```python
-import gym
-env = gym.make('locomotion:A1GymEnv-v1', render=True)
-```
-
-which will pop up the standard pybullet renderer.
-
-And you can always call env.render(mode='rgb_array') to generate frames.
-
-## Running on the real robot
-Since the [SDK](https://github.com/unitreerobotics/unitree_legged_sdk) from Unitree is implemented in C++, we find the optimal way of robot interfacing to be via C++-python interface using pybind11.
-
-### Step 1: Build and Test the robot interface
-
-To start, build the python interface by running the following:
-```bash
-cd third_party/unitree_legged_sdk
-mkdir build
-cd build
-cmake ..
-make
-```
-Then copy the built `robot_interface.XXX.so` file to the main directory (where you can see this README.md file).
-
-If you encounter the following problem:
-```
-fatal error: lcm/lcm-cpp.hpp: No such file or directory
-```
-you need to install lcm library as described [here](https://github.com/cdhiraj40/LCM-INSTALL).
-
-
-### Step 2: (Optional) Setup correct permissions for non-sudo user
-Since the Unitree SDK requires memory locking and high process priority, root priority with `sudo` is usually required to execute commands. As an alternative, adding the following lines to `/etc/security/limits.confg` might allow you to run the SDK without `sudo`.
+Example_2: evaluation
 
 ```
-<username> soft memlock unlimited
-<username> hard memlock unlimited
-<username> soft nice eip
-<username> hard nice eip
+python evalutation/eval_xxx.py --config {PATH_TO_CONFIG_FILE} --id {RUN_NAME} --weights {PATH_TO_PRETRAINED_WEIGHTS}
 ```
 
-You may need to reboot the computer for the above changes to get into effect.
+Solving LMIs to get matrix P and control feedback law by running **solve_limis.m** in matlab.
 
-### Step 3: Test robot interface.
 
-Test the python interfacing by running:
-`python -m locomotion.examples.test_robot_interface`
+## Run experiments for quadruped Robot
 
-If the previous steps were completed correctly, the script should finish without throwing any errors.
+### Setup for Local PC
 
-Note that this code does *not* do anything on the actual robot.
+It is recommended to create a separate virtualenv or conda environment to avoid conflicting with existing system
+packages. The required packages have been tested under Python 3.8.5, though they should be compatible with other Python
+versions.
 
-It's also recommended to try running:
-`python -m locomotion.examples.a1_robot_exercise`
+Follow the steps below to build the Python environment:
 
-which executes open-loop sinusoidal position commands so that the robot can stand up and down.
+1. First, install all dependent packages by running:
 
-## Running the Whole-body controller
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-To see the whole-body controller, run:
-```bash
-python -m locomotion.examples.whole_body_controller_example --use_gamepad=False --show_gui=True --use_real_robot=False --max_time_secs=10
-```
+2. Second, install the C++ binding for the convex MPC controller:
 
-There are 4 commandline flags:
+   ```bash
+   python setup.py install
+   ```
 
-`use_real_robot`: `True` for using the real robot, `False` for using the simulator.
+3. Lastly, build and install the interface to Unitree's SDK. The
+   Unitree [repo](https://github.com/unitreerobotics/unitree_legged_sdk) keeps releasing new SDK versions. For
+   convenience, we have included the version that we used in `third_party/unitree_legged_sdk`.
 
-`show_gui`: (simulation only) whether to visualize the simulated robot in GUI.
+   First, make sure the required packages are installed, following
+   Unitree's [guide](https://github.com/unitreerobotics/unitree_legged_sdk?tab=readme-ov-file#dependencies). Most
+   nostably, please make sure to
+   install `Boost` and `LCM`:
 
-`use_gamepad`: whether to control the robot using a gamepad (e.g. Logitech F710), or let the robot follow a demo trajectory.
+   ```bash
+   sudo apt install libboost-all-dev liblcm-dev
+   ```
 
-`max_time_secs`: the amount of time to execute the controller. For real robot testing, it's recommended to start with a small value of `max_time_secs` and gradually increase it.
+   Then, go to `third_party/unitree_legged_sdk` and create a build folder:
+   ```bash
+   cd third_party/unitree_legged_sdk
+   mkdir build && cd build
+   ```
 
-## Credits
+   Now, build the libraries and move them to the main directory by running:
+   ```bash
+   cmake ..
+   make
+   mv robot_interface* ../../..
+   ```
 
-The codebase is derived from the Laikago simulation environment in the [motion_imitation](https://github.com/google-research/motion_imitation) project.
+### Setup for Real Robot
 
-The underlying simulator used is [Pybullet](https://pybullet.org/wordpress/).
+Follow the steps if you want to run controllers on the real robot:
+
+1. **Setup correct permissions for non-sudo user (optional)**
+
+   Since the Unitree SDK requires memory locking and high process priority, root priority with `sudo` is usually
+   required to execute commands. To run the SDK without `sudo`, write the following
+   to `/etc/security/limits.d/90-unitree.conf`:
+
+   ```bash
+   <username> soft memlock unlimited
+   <username> hard memlock unlimited
+   <username> soft nice eip
+   <username> hard nice eip
+   ```
+
+   Log out and log back in for the above changes to take effect.
+
+2. **Connect to the real robot**
+
+   Configure the wireless on the real robot with the [manual](docs/A1_Wireless_Configuration.pdf), and make sure
+   you can ping into the robot's low-level controller (IP:`192.168.123.10`) on your local PC.
+
+[//]: # (3. **Test connection**)
+
+[//]: # ()
+
+[//]: # (   Start up the robot. After the robot stands up, enter joint-damping mode by pressing L2+B on the remote controller.)
+
+[//]: # (   Then, run the following:)
+
+[//]: # (   ```bash)
+
+[//]: # (   python -m src.robots.a1_robot_exercise_example --use_real_robot=True)
+
+[//]: # (   ```)
+
+[//]: # ()
+
+[//]: # (   The robot should be moving its body up and down following a pre-set trajectory. Terminate the script at any time to)
+
+[//]: # (   bring the robot back to joint-damping position.)
+
+### PhyDRL Training and Testing
+
+PhyDRL adopts a model-based control approach with DDPG as its learning strategy. Through the utilization of the residual
+control framework and a CLF(Control Lyapunov Function)-like reward design, it demonstrates great performance and
+holds promise for addressing safety-critical control challenges.
+
+#### Training
+To train the A1 using PhyDRL, refer to the following command:
+
+   ```bash
+   python -m examples.main_drl --gpu --mode=train --id={your model name}
+   ```
+
+#### Testing
+To test the trained PhyDRL policy, refer to the following command:
+
+   ```bash
+   python -m examples.main_drl --gpu --mode=test --id={your model name}
+   ```
+
+### Running Convex MPC Controller
+
+We introduce two kinds of MPC controllers for the stance leg, one of which incorporates `state` as its objective
+function while another uses `acceleration` for optimization. To test each variant, you need to modify the value of
+*objective_function* in the config file.
+
+### In Simulation
+
+The config parameters are loaded from `config/a1_sim_params.py`. You can also change the running speed in
+the *a1_mpc_controller_example.py* file after spawning an instance for the parameters. To
+run it in simulation:
+
+   ```bash
+   python -m examples.a1_mpc_controller_example --show_gui=True --max_time_secs=10 --use_real_robot=False --world=plane
+   ```
+
+### In Real A1 Robot
+
+The config parameters are loaded from `config/a1_real_params.py`. You can also change the running speed in
+the *a1_mpc_controller_example.py* file after spawning an instance for the parameters. To
+run it in real A1 robot:
+
+1. Start the robot. After it stands up, get it enter joint-damping mode by pressing `L2+B` on the remote controller.
+   Then the robot should lay down on the ground.
+
+2. Establish a connection to the A1 hotspot (UnitreeRoboticsA1-xxxx) on your local machine and verify its communication
+   with the low-level controller onboard.
+
+3. Run the following command:
+   ```bash
+   python -m examples.a1_mpc_controller_example --show_gui=False --max_time_secs=15 --use_real_robot=True 
+   ```
