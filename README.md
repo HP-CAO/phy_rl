@@ -6,7 +6,11 @@
     <img src="diagram.png" alt="Logo" width="90%"><br />
   </p>
 
+
+### A clean implementation of Phy-DRL will be released soon.
+
 # Phy-DRL
+
 
 This paper proposes the Phy-DRL: a physics-regulated deep reinforcement learning (DRL) framework for safety-critical autonomous systems. The Phy-DRL has three distinguished invariant-embedding designs: i) residual action policy (i.e., integrating data-driven-DRL action policy and physics-model-based action policy), ii) (automatically construct) safety-embedded reward, and iii) physics-model-guided neural network (NN) editing, including link editing and activation editing. Theoretically, the Phy-DRL exhibits 1) mathematically-provable safety guarantee, and 2) strict compliance of critic and actor networks with physics knowledge about the action-value function and action policy. Finally, we evaluate the Phy-DRL on a cart-pole system and a quadruped robot. The experiments validate our theoretical results and demonstrate that Phy-DRL features guaranteed safety compared to purely data-driven DRL and solely model-based design, while offering remarkably fewer learning parameters and fast training towards safety guarantee.
 
